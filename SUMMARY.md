@@ -7,5 +7,6 @@
 * [Log把磁盘写满了会有什么后果](log-ba-ci-pan-xie-man-le-hui-you-shi-mo-hou-guo.md)
 * [Raft论文摘要](raft-lun-wen-zhai-yao.md)
 * [tcmalloc解析](tcmalloc-jie-xi/README.md)
-  * [tcmalloc解析1](tcmalloc-jie-xi/tcmalloc-jie-xi-1.md)
+  * [tcmalloc编译调试](tcmalloc-jie-xi/tcmalloc-bian-yi-tiao-shi.md)
   * [tcmalloc解析2](tcmalloc-jie-xi/tcmalloc-jie-xi-2.md)
+  * [tcmalloc解析3 sizemap](tcmalloc-jie-xi/tcmalloc-jie-xi-3-sizemap.md)
