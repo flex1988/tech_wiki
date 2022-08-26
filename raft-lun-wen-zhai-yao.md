@@ -1,0 +1,249 @@
+# Raft论文摘要
+
+raft是一个管理复制流的一致性算法。和paxos一样高效，但结构更简单。
+
+实际系统中的一致性算法通常有以下特点：
+
+1. 在非拜占庭条件保证安全，包括网络延迟，网络分区，丢包，重复包，网络乱序等，非拜占庭是指不会有人伪造请求，处理非拜占庭条件的算法有raft paxos等，处理拜占庭情况有特殊的算法
+2. 当大多数server正常时是可以提供服务的
+3. 不依赖时钟保证一致性，错误的时钟和极端的网络延迟只会导致可用性问题
+4. 少数节点网络延迟不会影响性能
+
+**raft把共识性算法分成主要3个相对来说独立的子问题**
+
+1. leader选举，当leader失败的时候必须选出新leader
+2. log复制，leader必须接受从client过来的log，而且要复制到集群中
+3. 安全，任何一个server在状态机里应用了一个log entry后，其他server不会在相同的log index应用不同的log entry
+
+**5.1 raft basic**
+
+raft集群通常有5个server，允许同时有2个故障。任意时刻每个server有三种状态，leader\follower\candidate。正常状态下只有一个leader，其他都是follower。follower只能被动接收leader和candidate的请求，而leader处理所有的客户端请求（当有client访问followers的时候会被重定向到leader）。candidate是从来被选举成leader的中间状态。
+
+raft把时间分成连续的任意大小的terms，每个term都有一个连续的序号。每个term开始于一个选举，1个或多个candidate会尝试变为leader。如果一个candidate成为了leader，那么term内接下来的时间他会作为leader服务整个集群。在一些情况下投票会分裂，这个时候term就已没有leader结束，一个新的term也会马上开始。raft保证在一个term内最多有一个leader。
+
+不同的server可能会观测到不同的term的过渡期，有的server甚至所有的选举都没有观测到。term就像raft里的逻辑时钟，它可以让server分辨出哪些是过期的消息或者死的leader。每个server都保存了一个当前的term，会随着时间单调递增。server通信的时候term也会带着，如果一个server的term比其他人的小，他会更新自己的term。如果一个candidate或者leader发现自己的term过期了，那他会把自己转成follower状态。如果一个server接受到一个请求带着过期的term，那么他会丢掉这个请求。
+
+raft server用rpc来通信，最基础的算法里只有两种rpc，RequestVote 是由candidate在选举时发起，AppendEntries是由leader在复制log时发起，也作为一种心跳的形式。
+
+**5.2 leader选举**
+
+raft用心跳机制去触发leader选举。当server启动的时候是作为follower开始的。一个server只要从leader或者candidate收到合法的rpc就会呆在follower状态。leader发送周期性的心跳（也就是没有Log的AppendEntries）到所有的followers去保持权威。如果一个follower一段时间内没有收到通信被称为选举超时，他会认为没有合法的leader并开始选举一个新leader。
+
+为了开始选举，一个follower先涨自己的term然后转为candidate状态，他先是为自己投票然后并发的给集群里其他server发RequestVote的rpc。一个candidate会保持这个状态知道以下三种情况：
+
+1. 它赢得了选举
+2. 另一个server证实自己是leader
+3. 一段时间过去了，但是没有选出来leader
+
+一个candidate只要在term内获得集群大部分server的投票就能赢得选举。一个server在一个term内最多会给一个candidate投票。规则保证一个确定的term内最多会有一个candidate赢得选举。一旦一个candidate成为leader他就会其他所有的server发送心跳以建立权威和避免新的选举。
+
+当等待都投票时，candidate可能会收到其他server的AppendEntries rpc。如果rpc中带的term和candidate自己的一样或者比自己的大，那么candidate会认为该server是合法的leader，自己会转为follower状态，如果rpc中带的term比自己的还小，那么candidate会拒绝这个rpc，自己仍保持在candidate状态。
+
+第三个可能的结果是没有一个candidate赢得选举，比如很多follower同时变成candidate，那么投票就会分裂。这种情况发生时，每个candidate都会等一个超时，然后自增term后发起新的一轮选举。然而没有额外干预下，这种情况可能会无穷无尽的继续下去。
+
+raft用随机的选举超时去保证分裂的投票是少的，他们也能很快的解决掉。为了防止一上来投票就分裂，选举的超时时间是在一个定长的时间内随机选择的。这会导致大部分情况下只有一个server超时了，它给其他server发了心跳然后自己赢得选举。解决分裂的投票也是相同的做法。
+
+**5.3 Log Replication**
+
+一旦一个leader被选中后，就开始服务客户端请求了。每个客户端请求都有一个需要被复制状态机执行的命令。leader把命令放到自己的log里后，并发的向其他server发起AppendEntries rpc复制命令。当entry被安全的复制完后，leader才会更新自己的状态机然后给client返回结果。如果followers crash或者跑得慢，又或者丢包等问题，leader会一直重试AppendEntries rpc直到所有的follower都保存了所有的log entries。
+
+![image](https://user-images.githubusercontent.com/7221964/128592026-3306046f-ab84-41d3-a1d3-3d2301e42703.png) lead在收到log entry时保存log的格式是term和状态机的命令。log entries里的term数字可以用来检查log间的不一致。每个log entry都有一个整数的log index唯一确认log里的位置。
+
+leader决定什么时候向状态机apply log是安全的，这样的log entry被称为committed。raft保证被提交的entries都是持久性的，最终会被所有的状态机（应该是其他的follower）apply。大部分server复制成功后，leader才会提交log entry。一旦一个followers发现一个log entry被提交了，那他也会提交这个entry到本地的状态机里。
+
+我们设计raft去保持log在多个server上的一致性连贯性，这不止会使系统的行为更加简单和有可预测性，也会是一个保证安全性的重要组件。raft保持了以下几个属性，他们一起构成了 Log Matching的属性： ![image](https://user-images.githubusercontent.com/7221964/128594588-383cbdc0-fefb-45c3-b89b-de996bb14d66.png)
+
+1. 如果两个log entry在不同server的log里有相同的index，那么他们包含的command也是一样的
+2. 如果两个log entry在不同server的log里有相同的index，那么他们之前的log也都是一样的
+
+第一个属性指出了一个事实，在特定的term和特定的log index，leader最多只会创建一个log entry，log entry也从来不会改变在log中的位置。第二个属性被AppendEntries rpc前的一致性检查保证。当发送AppendEntries rpc的时候，leader发送了新entry前的entry的term和index。如果follower在它的log中没有发现一个entry有相同的log index和term，那么它就会拒绝新的entry。一致性检查像一个入门步骤，开始的空状态的log满足了Log Matching Property当log扩展的时候。作为结果，当AppendEntries返回成功的时候，leader知道follower在新entry之前的log和自己是一样的。
+
+在正常运行的情况下，leader和follower保持稳定，AppendEntries的一致性检查从来不会失败。但当leader crash的时候，log就会不一致了（老的leader有可能没有复制他的log里所有的entry)。这种不一致叠加起来可能会导致一系列的leader和follower crash。
+
+![image](https://user-images.githubusercontent.com/7221964/128821925-1bfb3cb6-7be6-49bb-8e63-fdc1b2f32c5d.png) 图7显示了follower的log有可能和新leader的多种差别。follower可能会丢掉一些entry，也有可能会多出来一些不是当前leader的entry，或者两种情况都有。
+
+raft里，leader通过强制follower复制自己的log来解决不一致，也就是说follower里冲突的log会被leader的log重写。
+
+为了让follower的日志和自己一致，leader必须找到最近一致的log entry，删除这个点以后的follower的日志，并把自己从这个点以后的日志发给follower。所有的这些操作都在给AppendEntries回复的时候发生。leader给每个follower都维持了一个nextIndex，也就是leader将要复制给follower的下一个log。当leader第一次上任的时候，他会把follower的nextIndex初始化为自己的下一个log。如果follower的log和leader不一致，AppendEntries的一致性检查就会失败，失败一次后，leader就会减小nextIndex，然后重试AppendEntries。最终nextIndex会到一个leader和follower一致的点，这时候AppendEntries就会成功，并移除了follower和leader不一致的log。一旦AppendEntries成功了，follower和leader的log就会在本term接下来的时间里保持一致。
+
+如果有需要，协议也可以优化被拒绝的AppendEntries rpc数。比如，当拒掉一个AppendEntries时，follower可以把所有冲突的entry和第一个log index返回给leader。知道了这些信息，leader可以一次性的把log index挪到冲突的第一个log entry，这样一个AppendEntries就可以把所有的冲突的log发过去。实际上我们怀疑这个优化的必要性，因为failure很少发生也不会有很多冲突的log。
+
+通过这个机制，当切主时，新主不需要特别的操作就能恢复log的一致性。一个leader永远不会改写或者删除自己的log entry。
+
+log复制的机制显示了Section2里应有的一致性属性：raft可以接受复制或者应用log entry，一旦大部分server都up了的话。通常情况下一轮rpc就可以复制一个entry到集群中大部分server，一个慢节点不会影响整体性能。
+
+**5.4 Safety**
+
+前一节主要说明的是raft如何选主和复制log entry。然而目前为止介绍的机制还不够充分保证所有的状态机都用同样的次序执行同样的指令。比如，在leader提交log的时候一个follower可能会不可用，然后它可能会被选为主并复写了这些entry，这样就会导致状态机的不一致。
+
+这一节通过在raft协议上添加一个选主的限制来保证raft算法的安全性。这些限制保证了leader包含之前term提交的所有entry。有了选举的限制后，我们让提交的规则更加清晰。最后我们对于leader的完整性属性给出了一个证明的框架，展示了它是如何帮我们去纠正复制状态机的行为。
+
+**5.4.1 选举限制**
+
+在一些基于leader的共识性算法里，leader必须包含所有已经提交的log entry。在一些共识性算法中，比如Viewstamped Replication，一个Leader就算刚开始的时候没有所有的commited log也可以被选为主。这些算法里包含了一些额外的机制，将新主缺失的log同步过去。但是这却带来了额外的理解成本和复杂性。raft用了一个简单的做法，它保证了新主都必须有上个term所有commited的log entry，这样就不需要去同步这些log entry了。这也意味着log entry只会从leader复制到follower，leader永远不会改写自己已经存在的log entry。
+
+raft用投票的机制去阻止一个没有包含所有log entry的candidate被选为主。为了参加选举，candidate必须联系集群里的大多数节点，这也意味着每一个commited log entry至少会存在这些节点里的一个。如果这个candidate的log同大多数里的log保持一致，就说明它拥有了所有的commited log entry。RequestVote Rpc实现了这个限制，这个rpc包含了candidate的log信息，如果voter发现自己的log比他更新会拒掉投票。
+
+raft通过比较最后的log entry的term和index来比较哪个log更新。如果log entry是不同的term，那么最新的term的log更新，如果log entry是相同的term，那么更长的index的log更新。
+
+**5.4.2 提交上个term的entry**
+
+像Section 5.3里介绍的那样，当大多数server都有一个log entry的时候，leader就知道它当前term的entry被commit了。如果一个leader在提交entry前crash了，那么未来的leader会试图去完成这个entry的复制。然而，一个leader不能立马得出结论一个上个term的entry一定是committed，除非大部分server都有这个entry。
+
+![image](https://user-images.githubusercontent.com/7221964/149660984-e7d27094-2165-416b-8275-ecd498aba1d4.png)
+
+为了消灭上图的这种问题，raft永远不会用数replica的方式来提交上个term的log entry。只有leader当前的term的log entry可以用数replica的方式提交，一旦有一个entry通过这种方式提交了，那么所有之前的entry也被间接的提交了，依据与Log Matching属性。有很多种情况，leader可以安全的决定有个老的entry被提交了（比如所有的server都有这个entry），但是raft采取了一种更容易理解的方式。raft在提交规则里引入了额外的复杂度，是因为leader复制entry的时候保留了以前的term数。在其他的一些一致性协议里，如果一个新的leader复制之前term的entry，它肯定会带着它的新term数。raft的做法让它更容易解读log entry，由于他们保持了同样的数字在不同的时间和不同的log里。作为结果，和其他一致性算法相比，raft里新的leader很少会发送之前term的log entry（在其他的算法里，为了记住这些之前term的log，在提交之前，leader必须发送重复的log entry）。
+
+**5.4.3 安全性**
+
+基于完整的raft算法，我们现在可以更细节的讨论Leader Completeness属性（这些讨论基于安全性的证明，在Section 9.2）。首先我们假设Leader Completeness不完备，我们只需要举一个反例就好了。假设Leader T在它的term里提交了一个log entry，但这个log entry没有被未来的leader保存下来。假设最小的term U > T，term U的leader U没有保存这个entry。
+
+1. Leader U选举的时候肯定没有这个log entry。（leader永远不会删除或者覆写自己的log entry）
+2. Leader T在集群中大部分server复制了这个log entry，Leader U收到集群中大多数的投票。也就是说至少会有一个voter既接受了Leader T的log entry又给Leader T投了票，如下图所示，这个voter是得到反例的关键。 ![image](https://user-images.githubusercontent.com/7221964/154836871-a3fad57c-3a2f-4afd-aad0-e7b1e4cf0305.png)
+3. 这个voter一定是在给leader U投票前已经接受了leader T的这个log entry，不然的话他会拒绝掉Leader T的AppendEntries请求（因为它当前的term会比leader T高）。
+4. voter给leader U投票的时候有这个log entry，leader冲突的时候，leader不会改自己的entry，follower会挪掉和leader冲突的log entry。
+5. 由于voter给leader U投票，所以leader U的log一定和voter一样新，这会有些自相矛盾。
+6. 首先voter和leader U有同样的最新的log term，那么leader U的log肯定和voter一样长，这和之前voter有那个log entry而leader U没有相矛盾
+7. 否则，leader U的log term一定比voter大。其次它应该比T大，因为voter最新的log term最小也是T。leader U之前的leader肯定也有这些已经提交的entry。这样，通过 Log Matching属性，Leader U的log肯定也包含这个提交的entry，这也自相矛盾。
+8. 这些完成了这个反例。因此，比T大的所有term的leader必须包含所有在term T中提交的log。
+9. Log Matching属性保证了未来的leader也会含有间接提交的entry，就想图8中Index2一样。 ![image](https://user-images.githubusercontent.com/7221964/154839330-2aadf794-2507-4c6a-b0e8-5d8fa0edf8cd.png)
+
+有了Leader Completeness属性，我们可以证明图3中的State Machine Safety属性，这个属性陈述了一个规则，如果一个server在一个index提交了一个entry到它的状态机，那么其他的server永远不会在同样的index提交一个其他的log。server apply一个log entry的时候，它之前的log必须和leader一样，而且这个log entry必须已经被提交了。现在考虑到最小的term，任何server apply了一个指定的log entry，Log Completeness属性会保证高term的leader会保存同样的log entry，所以接下来的server会在同样的位置apply 同样的log entry。这也保证了State Machine Safety属性。
+
+最后，raft需要server按照index的顺序去apply log entry。结合State Machine Safety属性，这意味着所有的server可以应用相同的log entries集群到他们的状态机里，以同样的顺序。
+
+**5.5 Follower和candidate crash**
+
+这里我们聚焦到leader的失败上。Follower和Candidate crash比leader crash更容易处理一些，他们会被用同样的方式处理。如果一个Follower或者Candidate crash了，接下来发给它的RequestVote和AppendEntries Rpc都会失败。raft用无限重试的方法处理这些失败，当crash的server重启后，这些rpc就会成功了。如果一个server完成了任务但是在回复这个rpc之前crash了，那么当它重启后它会收到同样的rpc，raft的rpc是幂等的，所以这也没有问题。比如，一个follower收到了一个AppendEntries的请求含有它已经提交的log，那么它会忽略掉这个请求。
+
+**5.6 时间和可用性**
+
+我们的一个要求是raft的安全性不会依赖于时钟，当某些时间发生的过快或者过慢也不会产生错误的结果。然而，可用性（系统及时回复client的能力）不可避免的依赖于时间，比如在server crash期间，mesage交换肯定比通常耗时更久，candidate需要耗时去赢得选举，没有一个稳定的leader，raft不会处理新的请求。
+
+Leader选举是raft对于时间更严格的一部分，当系统满足时间的要求时，raft将会选举和维持一个稳定的leader： 广播时间 << 选举超时 << MTBF
+
+在这个不等式里，广播时间是并发给集群里所有的server发送rpc并接受到回复的平均时间。选举超时在Section 5.2有介绍。MTBF是server出故障的平均间隔。广播时间应该远远比选举超时要小，这样leader可以可靠的把心跳消息发到follower上，以避免开始新的选举。再加上选举超时的随机性，这个不等式也会让投票分裂更加不可能。选举超时应该远远比MTBF小，这样系统可以稳定的工作。当leader crash的时候，整个系统只会在选举超时期间不可用，我们觉得这只是整个运行期间很小的一部分。
+
+广播时间和MTBF是整个底层系统的属性，与此相对选举超时是我们必须决定的。raft的rpcs通常都需要把信息持久化在可靠的存储里，所以广播时间一般从0.5ms~~20ms，还得看存储的技术。作为结果，选举超时大概在10ms~~500ms之间。通常server的MTBF是几个月或者更多，这很简单就能满足时间的需要。
+
+**6 集群角色变更**
+
+直到现在我们都假定集群的配置（参与到一致性算法中的server的集合）是固定的。从实践来说，偶尔也会有变更配置的需求，比如替换故障的机器或者减少replication的流量。尽管我们可以先把所有机器都下线，然后变更集群配置，再重启，但是这会让集群在整个变更期间都不可用。另外，如果有人工操作的步骤，也会有误操作的风险。为了避免这些问题，我们决定去自动化配置变更，把它合到raft算法中。
+
+为了让配置变更机制更加安全，在变更中去让2个leader竞选肯定没有意义。不幸的是，任何让server直接从老的配置变到新配置的做法也是不安全的。由于不可能一次性的切换所有的server，集群可以在转换中先分成2个独立的多数派。
+
+为了保证安全，配置变更必须用一个两阶段的方式。有很多种方法去实现这个两阶段。比如一些系统用第一阶段去关闭老的配置，这样它就不能处理客户端请求了；然后第二阶段开启新配置。在raft里集群首先切换到一个传统的配置，我们叫做joint consensus；一旦joint consensus提交了，系统就会转换到新的配置。这个joint consensus结合了新的和老的配置：
+
+* Log entry被复制到所有的server上不管在新的配置还是老的配置
+* 任意一个server都可以成为leader
+* 投票（选举或者entry的提交）既需要老配置又需要新配置的大多数
+
+Joint consensus允许单独的server任意的时间在两个配置中转换。而且joint consensus也允许集群继续服务client请求即使在配置变更期间。
+
+集群配置保存和通讯用特殊的entry保存在log里；图11说明了配置变更的过程。 ![image](https://user-images.githubusercontent.com/7221964/155138556-efa82770-91e1-43a2-a062-dffb4ee1f352.png) 当leader收到一个请求从配置C old变成C new的时候，它为joint consensus（图上的C old,new）保存了一个log entry，然后用前面讲到的机制复制到其他的机器上。一旦一个给定的server添加了新的配置到它自己的Log里，它就会用这个配置来做决定（一个机器经常用log里最新的配置，不管有没有提交）。这也意味着leader将会用C old,new的规则一旦C old,new被提交。如果leader crash了，一个新的leader可能会被选举出来，可能来自C old或者C old,new，还得看选出的candidate是否已经接收了C old,new。在任何情况下，C new都不能独立的做决定。
+
+一旦一个Cold,new被提交了，Cold和Cnew都不能没有对方的同意就做出决定，Leader Completeness属性会保证只有含有Cold,new的log entry才会被选为主。现在leader可以安全的创建一个log entry表述Cnew并把它安全的复制到整个集群中。当server一看到它新的配置就会立马生效。新的配置提交后，老的配置就无关了，没有新配置的server也可以被shut down了。像下图这样没有一个时间间隙，Cold或者Cnew可以单方面的做出决定，这确保了安全性。 ![image](https://user-images.githubusercontent.com/7221964/157183934-00ec0be8-2172-483a-969e-fc3380da5a84.png)
+
+现在有三个问题去说明配置变更。第一个问题是新的server可能不会保存任何初始的log entry。如果他们被加到集群里的话，可能会有相当长的时候让他们追上log，在这期间他们都不能提交新的log entry。为了避免这种可能的gaps，raft在配置变更前引入了一个额外的阶段，在这个阶段新的server作为不投票的member加入到集群中（leader复制给它log entry，但不会考虑它的投票）。一旦新的server的log追上来了，配置变更就可以像上面说的那样开始了。
+
+第二个问题是集群的leader可能不是新配置的一部分。在这种情况下，leader steps down(也就是变为从)当它提交了Cnew的log entry时。这意味着会有一段时间（当它在提交Cnew时）Leader在管理一个不包括它自己的集群；它复制log entries，但不会把自己考虑到大多数中。在Cnew提交后，leader变更立即发生，因为这是第一次新配置可以独立运行。在这一点之前，可能只会有Cold的server才会被选成leader。
+
+第三个问题是缩容server会打扰到整个集群。这些server永远不会受到心跳，所以他们会超时然后发起新的选举。他们会这样带着新的term数字发RequestVote Rpc，这会让当前的leader回退到follower的状态。一个新的leader选出来后，挪走的server又会超时然后重复这个过程，结果是让整个集群变得不可用。
+
+为了阻止这个问题，servers会忽略掉Request Vote请求当他们有一个确信的leader存在时。特别的，如果一个server收到了RequestVote Rpc在最小的选举超时之内，它不会更新它的term或者回应投票。这不会影响正常的选举，因为所有的server都会等待一个最小的选举超时在开始新的选举之前。然而，他帮助了挪走的server避免了影响集群；如果一个leader能维持住整个集群的心跳，那么他就不会被一个更大的term罢免。
+
+**7 Log Compaction**
+
+在处理client请求时raft的log会一直增长，但是在一个现实的系统中，他不能无限制的增长。由于log变得越来越长，它占用了更多的空间，以及需要更多时间来回放。如果没有一些机制来discard掉这些重复的无用的log的话，这会造成比较严重的可用性问题。
+
+快照是做compaction最简单的方式。在快照的做法里，整个系统的状态都写到一个可靠存储上的快照中，然后这个时间点以前的log都可以被discard掉。快照在Chubby和ZooKeeper中应用很广泛，本节剩余的部分也介绍了raft里的快照。
+
+更高级的compaction做法，比如log cleaning和log-structed merge tree也是可以的。这些做法每次只回收数据的一小部分，这会让compaction的负载在时间上更加均匀。他们首先选择一个包含有很多垃圾数据的区域，然后重写有效的部分，最后在回收这个区域。和每次都对整个数据集打快照来比，这种方式需要更加复杂的机制。log cleaning需要修改raft，而状态机也可以用同样的比如快照的接口来实现lsm tree。
+
+图12解释了raft快照的基本思路。每个server独立的打快照，只覆盖了自己log里已提交的entry。大部分工作就是状态机把自己的状态写到快照里。raft的快照里也包含了一小部分的元数据，最后一个包含的index是快照替换的最后一个log entry的index，最后一个包含的term就是这个entry的term。他们被用来做AppendEntries的一致性校验，快照后的第一个log entry需要前一个的index和term来判断连续性。为了支持集群角色变更，快照也包含了最新log entry对应的配置版本。一旦一个server写完了一个快照，他会删除快照最后一个index前的所有log。 ![image](https://user-images.githubusercontent.com/7221964/159873068-8c619fab-5812-4342-9913-83993434769c.png)
+
+尽管servers都是独立的打快照，leader还是偶尔会发快照请求到follower上。这在leader发给followr的下一个log entry被discard的时候才会发生。幸运的是，这种场景不是一个正常的操作：和leader保持同步的follower应该已经有了这个entry。只有一个特别慢的follower或者刚加入集群的follower才会没有。把这种follower拉回来的方式就是leader发给它一个快照请求。
+
+leader用一个InstallSnapshot的新rpc来发送快照请求到这种特别慢的follower上，如图13。 ![image](https://user-images.githubusercontent.com/7221964/159879511-04e12192-7308-4839-971d-6aa8de4b30ab.png) 当一个follower通过这个请求收到了一个快照时，它必须决定怎么处理它已有的log entry。通常快照都会包含一些接收者log没有的新的信息；这些log会全部被快照替代，没提交的log entry或许会和快照有冲突。如果follower收到了一个同样前缀的快照（比如重传或者有bug），这样所有的log entries都会被快照删掉，但是这些快照后面的log entries都是合法的，必须要保留。
+
+每个follower可以不需要知道leader的信息独立的打快照，这种快照的方式背离了raft的强leader的原则。但是我们认为这种背离时合乎情理的。leader可以帮助解决在达到一致性中的分歧，所有没有决定会冲突。数据仍然从leader流向follower，只是follower可以重新组织它的数据。
+
+我们可以提出一个基于leader打快照的方案，然后它给所有的follower发送这个快照。然而这会导致2个缺点。首先，发送快照到每个follower会浪费网络带宽，减慢快照进度。每个follower已经有了打快照需要的信息，这也使每个server用自己本地的状态打快照比通过网络传输一个快照更加廉价。其次，leader的实现方案会更加复杂。比如，为了不阻塞client请求，leader可能会发送快照的同时也会并发发送新的log entry。
+
+有两个重要的问题影响了快照的性能。首先，servers必须决定什么时候打快照。如果一个server太频繁打快照，会浪费磁盘的带宽和电；如果太不频繁，会有用尽存储资源的风险以及重启时会浪费更多时间去回放log。一个简单的策略是当log增长到一个固定的大小时就打一个快照。如果这个大小被设置的远远比快照的大小要大，那么磁盘过度使用将会很小。
+
+第二个影响性能的问题是写快照需要很长的时间，我们也不想让这个过程影响正常的操作。解决方法是用copy-on-write的技术 ，这样处理新请求也不影响快照。举个例子，状态机会用一些天生支持的数据结构。同时，操作系统提供了copy-on-write的机制（比如Linux的fork）用来创建一个整个内存状态机的快照。
+
+**8. Client端的交互**
+
+这一节说明了client怎么和raft交互，包括client怎么找到集群的leader，以及raft怎么支持线性语义。这些问题适用于所有的一致性系统，raft的解决方法和他们类似。
+
+raft的client把他们的请求都发到leader上。当一个client第一次启动时，它连接到一个随机选择的server上。如果client的第一个连的不是leader，那么这个server就会拒掉这个请求，然后告诉client它知道的最近的一个leader（AppendEntries请求包含了网络信息）。当leader crash的时候，client请求会超时；client会随机选一个server重试。
+
+raft的目标是实现一致性的语义（每个操作看起来像瞬时执行的，只会执行一次，在某一个时间点在它请求和回复之间）。然而，像上面描述的，raft可以执行一个命令多次：比如，如果leader在提交log entry之后回复client之前挂了，client会重试这个请求到一个新的leader，导致他会被执行第二次。解决方案是给每个命令一个确定的序列号。这样，状态机追踪每个client处理的最新的序列号以及关联的请求。如果收到了一个已经处理过的序列号，它就会立即回复不需要处理这个请求。
+
+只读操作不需要写任何信息到log里就可以操作。没有额外措施的话这会冒着读到过期数据的风险，因为leader 有可能在回复请求时已经被别的leader替代了，而且自己也不知道。线性读不能读到过期数据，raft需要两个额外的储存去保证在不需要log的情况下维持这个原则。首先，leader必须有关于提交的entries最新的信息。Leader Completeness属性保证一个leader有所有已提交的log entry，但是在它的term开始的时候，他可能不知道是哪些log。为了找到这些log，它需要从它的term提交一个entry。raft处理这种情况通过让每个leader在term开始时提交一个no-op entry到log里。其次，leader在处理只读请求时需要检查它是否已经被踢掉了（如果有个新的leader选出来了，那么它的信息可能是过期的）。raft通过在回复只读请求前让leader和集群中大多数交换心跳来解决这个问题。或者，leader可以依赖心跳的机制去提供一种租约的形式，但是这回依赖时间的安全性。
+
+**9 实现和评估**
+
+我们把raft作为复制状态机的一部分实现了，里面保存了RAMCloud的全部的配置信息，并协助RAMCloud协调者的故障恢复。raft的实现包含了2000行c++代码，不包含测试，注释或者空行。这些源代码完全是开源的。而且还有25个基于本文草稿独立实现的第三方库。而且，很多公司也在应用基于raft的系统。
+
+本节剩余的部分评估了raft的三个标准，可理解性，正确性，性能。
+
+**9.1 可理解性**
+
+为了衡量raft相对于paxos的可理解性，我们用斯坦福大学的高级操作系统课程和U.C.伯克利的分布式计算课程进行了一个实验。我们记录了一个raft课程的录像，另外一个用paxos，然后创建了对应的答题。raft课程覆盖了本文除log compaction外的内容；paxos课程包括了足够多的材料去创建一个相等的状态机，包括单一paxos，多paxos，重新配置，以及一些实际系统里的优化点（比如leader选举）。答题测试了对于算法的基本理解，也需要学生举出一些边界情况。每个学生观看第一个视频，然后做对应的试题，然后看第二个视频，做第二试题。大约有一半的参与者先做paxos部分，另一半先做raft的部分，考虑到不管是个体的表现不同，以及从第一部分学习中得到经验的影响。我们对比了参与者每次测验的得分情况去判断参与者是否在raft的理解上表现的更好。
+
+我们试图把paxos和raft的对比做的尽量公平。实验有两点照顾到了paxos，43个参与者的15个说有paxos的一些经验，然后paxos的视频比raft长14%。像图表1总结的那样，我们采取了几步去缓和了潜在的偏见来源。我们所有的资料都可以review。 ![image](https://user-images.githubusercontent.com/7221964/160601134-2fddbe2c-86a6-4c03-b9a4-ee884e966dba.png)
+
+平均，参与者在raft测验上比paxos多得4.9分，满分60分，raft平均分25.7，paxos平均分20.8；图14展示了他们独立的得分。一个结对的t-test说明，有95%的把握，raft分数的分布平均比paxos分数分布多2.5分。 ![image](https://user-images.githubusercontent.com/7221964/160601174-46bb82e8-7188-4635-9f81-340f1c5c2392.png)
+
+我们也创建了一个线性的模型，用来预测新学生的测验得分，基于3个因素，参加了哪个测验，之前对于paxos的了解，和他们学习两种算法的顺序。这个模型预测了测验的选择产生了12.5点的区别在raft的喜好上。这比观察到的4.9分高了很多，因为很多学生已经有了paxos的知识，这会帮助他们了解了很多paxos，这却对raft很少有帮助。好奇的，这个模型也预测了先参加了paxos测验的人会比没参加过的人在raft测验少6.3分；尽管我们也不知道为啥，这显然在统计学上很明显。
+
+我们也调查了在测验后参与者觉得哪个算法更容易理解或解释；这些结果被列在图标15里。绝大多数的参与者说raft会更加简单。然而，这些自我感受可能不如参与者的测验得分更加客观，或者参与者由于我们产生了raft更加简单的偏见。 ![image](https://user-images.githubusercontent.com/7221964/160603116-9f69f973-e2d1-4c49-942a-c86d3955794e.png)
+
+**9.2 正确性**
+
+我们在第五节给出了形式化的规约，和共识性机制的安全性的证明。形式化的规约让图表2陈列的信息用TLA+语言验证完全正确。这大约有400行长度，作为证明的一部分。他对于重新实现raft的人来说也很有用。我们也用TLA系统证明了Log Completeness属性。然而这个证明依赖于一些不能被机器验证的不变式。此外，我们写了一个状态机安全性的不正式的证明，相对来说比较精确。
+
+**9.3 性能**
+
+raft的性能和其他的一致性算法差不多，比如paxos。影响性能最重要的场景是选举出来的leader什么时候复制新的log entry。raft实现了这个用了最小数量的消息（一个回环从leader到集群一半的server）。更进一步的提高raft的性能也是可以的。比如，它为了更高的吞吐和更低的延迟可以很简单的就支持batching和pipeling。很多其他算法里的优化都可以提出来；他们里很多都可以用到raft里来，但是我们把这些放到了未来的工作中。
+
+我们用我们raft的实现去衡量raft leader选举算法的性能和回答了两个问题。首先，选举过程是否迅速达成一致。其次，leader crash以后怎么达到最小的减少不可服务的时间。
+
+测量leader选举上，我们重复的干掉集群的5个server中的leader，然后测量它需要多久去检测到crash和选举出一个新的leader。设想一个更坏的场景，尝试的每个server有不同的长度，所以一些candidate没有资格成为leader。而且，为了创建出split vote的场景，我们的测试脚本在leader退出时都会出发一个同步的心跳广播（这模拟了leader在crash前复制了一个新的log entry的场景）。leader在他的心跳周期内随机的挂掉，心跳周期是所有测试里最小选举超时的一半。迄今为止，最小的downtime是大约最小选举超时的一半。
+
+图16里上面的图表显示了少量的选举超时的随机性就足够避免选举里的split votes。没有随机性的时候，由于一些split votes，在我们的测试里leader选举时间通常会多用10s。只是添加5ms的随机就有明显改善，会使中位数减少到287ms。用更多的随机性会让坏的场景加重：50ms的随机性1000次里最长的时间用了513ms。 ![image](https://user-images.githubusercontent.com/7221964/162405641-0875b617-a5d2-427e-8199-b91e091ac8c6.png)
+
+下面的图表显示了通过减少选举超时可以降低downtime。选举超时在12-24ms的时候，选举出一个leader平均只需要35ms（最长的一次用了152ms）。然而，减少选举超时不满足raft的时间需求：leader很难在其他server发起新的选举前广播完心跳。这会引起不必要的leader变更和减少系统整体可用性。我们建议用保守的选举超时比如150-300ms；这些超时时间可以在不会引起不必要的leader变更的同时又提供了很好的可用性。
+
+**10 相关工作**
+
+关于一致性算法已经有了几个发表的文章了，很多都可以归结到下面的一类：
+
+* Lamport的第一篇关于Paxos的解释，以及后面试图更加清晰的解释
+* Paxos的详尽描述，提供了很多确实的细节，以及为了提供实现的架构修改了算法
+* 实现了一致性算法的系统，比如Chubby,ZooKeeper,和Spanner。Chubby和Spanner的算法没有说明的很详细，尽管都声明给予Paxos。ZooKeeper的算法已经公布了更多细节，但是和Paxos还是很不一样的。
+* 可以应用到Paxos上的性能优化方法
+* Oki和Liskov的Viewstamped Replication (VR)，一个可选的分布式共识算法，和Paxos同期开发。最开始的版本和一个分布式事务的协议紧密耦合，但是最核心的共识协议最近被抽取出来了。VR采用了一个基于leader的方案，很多地方和raft类似。
+
+raft和paxos最大的不同是raft的强leader属性：raft用一个leader选举的机制作为共识协议的一个基本组成部分，它倾向于给leader尽可能的提供更多的功能。这个做法使算法变得简单和易于理解。举个例子，在Paxos里，leader选举和基础的共识性算法是互不影响的：他只是作为一个性能优化点以及不是达到共识的必要条件。然而，这回带来额外的机制：Paxos包含了二两段的协议和独立的leader选举。作为对比，raft把leader选举作为了共识性算法的一部分，用它作为两阶段的一部分。比Paxos减少了复杂性。
+
+和raft一样，VR和ZooKeeper也都是基于leader的，所以共享了很多raft之于Paxos的优势。然而，raft的机制比VR或者ZooKeeper更少一点，因为raft减少了非leader的功能性。举个例子，raft里的log entries只有一个流向，从leader通过AppendEntry Rpc向外走。在VR log entry里，双向都会有数据（leader在选举期间也可以接受log entry）；这会导致额外的机制和复杂性。已经公布的ZooKeeper的描述从leader出和入都会有log流量，但是在实现上更像raft。
+
+raft比其他几种共识性算法有更少的消息类型。比如，我们统计了VR和ZooKeeper用来做基础一致性和角色变更的消息类型（去掉log compaction和client交互，因为他们是几乎独立于算法外的）。VR和ZooKeeper都定义了差不多10种不同的消息类型，而raft只有4种消息类型（两个rpc请求和他们的response）。raft的消息比其他算法包含的信息更多一点，但是他们也更简单一点。此外，VR和ZooKeeper的log传输在leader变更期间也有；也需要额外的消息类型需要用来优化这些机制。
+
+raft强leader的做法简化了这个算法，但这排除了一些性能优化点。比如，平等Paxos（EPaxos）在没有leader的情况下，可以取得更高的性能。EPaxos在状态机命令里滥用了交互性。任何一个server一轮通信都可以提交一个命令，其他的命令也有可能在并发的被提出。然而，并发提出的命令不会有交互，EPaxos需要一轮额外的通信。因为任意一个server都有可能会提交命令，EPaxos在server间负载均衡，在WAN网络条件下能比Raft取得更低的延迟。然而，它给Paxos带来了更多的复杂性。
+
+其他的算法里有几个不同的集群角色变更的做法，包括Lamport‘s的原始提案，VR和SMART。我们选择了一致性做法的共同做法，因为它影响了其他的一致性协议，所以角色变更只需要一点点改动就可以了。Lamport的alpha-based做法不适合raft，因为它在没有leader的情况下也能达成一致。和VR以及SMART对比，raft的配置变更算法在处理正常请求的时候也能变更；作为对比，VR在配置变更期间停止了所有的请求，SMART提出了一个类似于alpha的方法，限制了未完成的请求数量。raft的做法比VR或者SMART更加简单。
+
+**11 结论**
+
+算法设计除了最主要的目标外，还要兼顾正确性、效率或者简洁性。尽管他们都是很有价值的目标，我们相信可理解性也同等重要。直到开发者把算法实现成一个实际的系统之前，也不会背离和扩展已经公布的形式。除非开发者对于算法有一个很深的认识，否则很难在他们的实现里保持它最初的属性。
+
+这本文里，我们解释了分布式共识算法的问题，他们是广泛接受的，但是个黑盒子，Paxos，挑战了学生和开发者很多年。我们开发了一个新的算法，raft，它比paxos更容易理解。我们认为raft提供了一个更好的系统构建的基础。把可理解性当成最主要的设计目标，改变了我们设计raft的做法；在设计过程中，我们发现在重复用了一些新的技巧，比如简化问题，简化状态。这些技巧不但影响了raft的可理解性，也对于我们对于他的正确性更有信心。
+
+**12 感谢**
+
+用户调查感谢Ali Ghodsi，David Mazieres，以及伯克利CS 294-91学生的支持，斯坦福CS 240的支持。Scott Klemmer帮助我们设计了我们的课程，Nelson Ray建议我们做了一些数据分析。给学生的Paxos的slides大多借用了Lorenzo Alvisi创作的。特别感谢David Mazieres和Ezra Hoch，帮助我们找到了一些bug。对于论文和用户学习材料，很多人提供了有用的建议，包括Ed Bugnion, Michael Chan, Hugues Evrard, Daniel Giffin, Arjun Gopalan, Jon Howell, Vimalkumar Jeyakumar, Ankita Kejriwal, Aleksandar Kracun, Amit Levy, Joel Martin, Satoshi Matsushita, Oleg Pesok, David Ramos, Robbert van Renesse, Mendel Rosenblum, Nicolas Schiper, Deian Stefan, Andrew Stone, Ryan Stutsman, David Terei, Stephen Yang, Matei Zaharia, 24 anonymous conference reviewers(with duplicates)，特别是我们的领路人Eddie Kohler。Werner Vogels发了一个更早草稿的twitter链接，这给raft带了额外的曝光。这些工作依赖于Gigascale系统研究中心和Multiscale系统研究中心，被2个研究中心的聚焦于研究中心的程序资助，一个半导体研究程序，被MARCO和DARPA资助，国家科学中心Grant No.0963859，来自于Facebook,Google,Mellanox,NEC,NetApp,SAP,三星的赞助。Diego Ongaro被Junglee 协会斯坦福研究生基金赞助。
