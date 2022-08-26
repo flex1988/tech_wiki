@@ -71,3 +71,90 @@ inline bool Sampler::TryRecordAllocationFast(size_t k) {
   return true;
 }
 ```
+
+```
+  uint32 cl;
+  if (PREDICT_FALSE(!Static::sizemap()->GetSizeClass(size, &cl))) {
+    return tcmalloc::dispatch_allocate_full<OOMHandler>(size);
+  }
+
+  size_t allocated_size = Static::sizemap()->ByteSizeForClass(cl);
+```
+
+今天看下sizemap，`size_t allocated_size = Static::sizemap()->ByteSizeForClass(cl);`，看这行代码，Static是一个类，它把所有tcmalloc里的静态变量都放在这里，SizeMap就是负责定长obj mapping的一个类。小于1024B的长度都是8字节对齐的，而大于1024B的长度是128B对齐的。
+
+// Examples: // Size Expression Index // ------------------------------------------------------- // 0 (0 + 7) / 8 0 // 1 (1 + 7) / 8 1 // ... // 1024 (1024 + 7) / 8 128 // 1025 (1025 + 127 + (120<<7)) / 128 129 // ... // 32768 (32768 + 127 + (120<<7)) / 128 376
+
+如果申请的内存比256k大，那么他就没有对应的sizeclass，小于256k且大于1k的内存按照128b对齐后算classindex，也就是`(size + 127 + (120 << 7)) >> 7`，小于1024B的时候`(size + 7) >> 3`，为了让index能连续起来，大于1024B的内存需要额外加120<<7之后算index。
+
+这块的逻辑是先通过size去查询sizemap，如果返回了一个class，说明再去sizemap查具体需要分配多少内存，而如果申请的内存大于256k，那么就会走另外一个路径申请内存。
+
+
+
+```
+  uint32 cl;
+  if (PREDICT_FALSE(!Static::sizemap()->GetSizeClass(size, &cl))) {
+    return tcmalloc::dispatch_allocate_full<OOMHandler>(size);
+  }
+
+  size_t allocated_size = Static::sizemap()->ByteSizeForClass(cl);
+```
+
+今天看下sizemap，`size_t allocated_size = Static::sizemap()->ByteSizeForClass(cl);`，看这行代码，Static是一个类，它把所有tcmalloc里的静态变量都放在这里，SizeMap就是负责定长obj mapping的一个类。小于1024B的长度都是8字节对齐的，而大于1024B的长度是128B对齐的。
+
+// Examples: // Size Expression Index // ------------------------------------------------------- // 0 (0 + 7) / 8 0 // 1 (1 + 7) / 8 1 // ... // 1024 (1024 + 7) / 8 128 // 1025 (1025 + 127 + (120<<7)) / 128 129 // ... // 32768 (32768 + 127 + (120<<7)) / 128 376
+
+如果申请的内存比256k大，那么他就没有对应的sizeclass，小于256k且大于1k的内存按照128b对齐后算classindex，也就是`(size + 127 + (120 << 7)) >> 7`，小于1024B的时候`(size + 7) >> 3`，为了让index能连续起来，大于1024B的内存需要额外加120<<7之后算index。
+
+这块的逻辑是先通过size去查询sizemap，如果返回了一个class，说明再去sizemap查具体需要分配多少内存，而如果申请的内存大于256k，那么就会走另外一个路径申请内存。
+
+
+
+```
+// Remove some objects of class "cl" from central cache and add to thread heap.
+// On success, return the first object for immediate use; otherwise return NULL.
+void* ThreadCache::FetchFromCentralCache(uint32 cl, int32_t byte_size,
+                                         void *(*oom_handler)(size_t size)) {
+  FreeList* list = &list_[cl];
+  ASSERT(list->empty());
+  const int batch_size = Static::sizemap()->num_objects_to_move(cl);
+
+  const int num_to_move = min<int>(list->max_length(), batch_size);
+  void *start, *end;
+  int fetch_count = Static::central_cache()[cl].RemoveRange(
+      &start, &end, num_to_move);
+
+  if (fetch_count == 0) {
+    ASSERT(start == NULL);
+    return oom_handler(byte_size);
+  }
+  ASSERT(start != NULL);
+
+  if (--fetch_count >= 0) {
+    size_ += byte_size * fetch_count;
+    list->PushRange(fetch_count, SLL_Next(start), end);
+  }
+
+  // Increase max length slowly up to batch_size.  After that,
+  // increase by batch_size in one shot so that the length is a
+  // multiple of batch_size.
+  if (list->max_length() < batch_size) {
+    list->set_max_length(list->max_length() + 1);
+  } else {
+    // Don't let the list get too long.  In 32 bit builds, the length
+    // is represented by a 16 bit int, so we need to watch out for
+    // integer overflow.
+    int new_length = min<int>(list->max_length() + batch_size,
+                              kMaxDynamicFreeListLength);
+    // The list's max_length must always be a multiple of batch_size,
+    // and kMaxDynamicFreeListLength is not necessarily a multiple
+    // of batch_size.
+    new_length -= new_length % batch_size;
+    ASSERT(new_length % batch_size == 0);
+    list->set_max_length(new_length);
+  }
+  return start;
+}
+```
+
+从central cache取对象时不会只取一个，sizemap里会记录一个batchsize，num\_objects\_to\_move，取出来的一堆obj，除了一个直接返回外，其余的会塞到当前线程的freelist里。
