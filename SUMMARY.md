@@ -15,3 +15,5 @@
   * [Log把磁盘写满了会有什么后果](cao-zuo-xi-tong/log-ba-ci-pan-xie-man-le-hui-you-shi-mo-hou-guo.md)
 * [论文](lun-wen/README.md)
   * [Raft论文摘要](lun-wen/raft-lun-wen-zhai-yao.md)
+* [CPU指令集](cpu-zhi-ling-ji/README.md)
+  * [SIMD](cpu-zhi-ling-ji/simd.md)
