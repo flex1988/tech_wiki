@@ -16,4 +16,5 @@
 * [论文](lun-wen/README.md)
   * [Raft论文摘要](lun-wen/raft-lun-wen-zhai-yao.md)
 * [CPU指令集](cpu-zhi-ling-ji/README.md)
+  * [xbyak](cpu-zhi-ling-ji/xbyak.md)
   * [SIMD](cpu-zhi-ling-ji/simd.md)
