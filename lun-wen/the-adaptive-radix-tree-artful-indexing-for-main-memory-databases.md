@@ -39,3 +39,21 @@ radix tree一个非常有用的属性是key的顺序不是随机的；这些key�
 在基于磁盘的数据库系统中，B+tree无所不在。他会一下子从磁盘读很多数据以避免对磁盘的读取次数。红黑树和T-Tree也被用过内存数据库的索引。Rao和Ross显示，T-tree，像很多二叉查找树一样，受限于严重的cache不友好的行为，在现代硬件上经常比B+Tree慢很多。作为一个备选，他们们提出了一个cache友好的B+Tree变种，被称为CSB+Tree。更多的针对B+Tree的cache优化是Graefe和Larson做的。
 
 现代CPU通过一个SIMD指令可以同时做多个比较操作。Schlegel et al.提出了K路查找，减少了比较次数从O(log2n)到O(logkn)，k是一个SIMD vector能容纳的key的数量。同二叉树相比，这个技术可以减少cache miss的次数，因为K次比较是同时在每条从主存中load到cache line上执行的。Kim et al.提出的FAST扩展了这个研究，一个架构敏感的方式来存放二叉树的技术。SIMD，cache line，page blocking都被用来优化cache和内存带宽。另外，为了提高搜索算法的吞吐，他们提出插入多级流水线的查询。FAST树和K路查找树是没有指针的搜索数据结构，他们把所有的key存在一个数组里，然后用offset计算来遍历整棵树。尽管这种方式是查询快和节省空间的，但他也暗示了在线的插入是不可能的。Kim et al. 也提出了一个GPU的FAST实现，以及把它的性能和现代CPU做对比。结果显示，由于更高的内存带宽，GPU可以得到比CPU更多的吞吐。尽管如此，因为GPU的内存容量受限，同主存的通信成本很高，需要用几百个并行的查询来得到较高的吞吐，所以GPU作为索引硬件来使用不是特别实用。我们就把注意力集中在CPU的索引架构上来。
+
+tries被用来索引字符串类型已经被研究的很广泛了。两个最早的变体用列表或者数组来做内部节点的形式。为了更有效的存储长string，Morrison提出了路径压缩的方法。Knuth很早就分析了这些trie变体。burst trie是一个更新一点的提议，树的高层节点用trie node，一但子元素数量少于某个数时就切换为链表。HAT-trie通过把链表切换为哈希表来提高性能。当大部分研究还在聚焦于索引字符串时，我们的目标是还能索引其他类型。所以相较于trie，我们更倾向于radix tree，因为它强调了排序算法的相似性和任意的数据都可以被索引。
+
+Boehm et al. 首次提出了前缀树作为一个通用的检索结构。在SIGMOD Programming Contest 2009提出了一个fanout 16的radix tree。KISS-Tree是一个更有效的radix tree，它只有三层，却能存储32位的key。他用key的前16位和虚拟内存系统来节省存储空间。第二层用接下来的10位作为一个数组，最后一层用一个bit vector来压缩。Hewlett-Packard研究实验室发明的Judy数组数据类型可以动态改变内部节点。
+
+Graefe讨论了可以二进制比较的key，作为一个简化和加速key比较的方法。我们用这些概念取得了radix tree里存储的key的顺序。
+
+## 3. ADAPTIVE RADIX TREE
+
+本章表述了Adaptive Radix Tree(ART)。我们基于一些在radix tree相较于比较树的优势开始。接下来我们说明了自适应的节点是必要的，因为传统的radix tree的空间占用非常显著。然后我们继续陈述了ART的查询和插入算法。最后我们分析了空间占用。
+
+#### A 开场白
+Radix tree有很多有趣的属性使他们和比较的搜索树完全不同：
+
+1. Radix tree的高度和复杂度基于key的长度而不是元素的数目
+2. Radix tree没有rebalance的操作，所有的插入顺序都会有同样的结果
+3. key基于字典序来存储
+4. 
