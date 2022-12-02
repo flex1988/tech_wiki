@@ -22,7 +22,8 @@ int main()
 {
     leak_func();
     return 0;
-}</code></pre>
+}
+</code></pre>
 
 编译的时候不是必须链接tcmalloc，运行时用LD\_PRELOAD指定tcmalloc path也可以，编译好后指定LD\_PRELOAD和HEAPPROFILE运行程序，HEAPPROFILE指定了memory heap文件dump的地址
 
@@ -33,7 +34,7 @@ int main()
 ![](<../.gitbook/assets/image (1) (1).png>)
 
 很快就dump出来很多heap文件，可以直接分析某个文件的内存分配\
-![](<../.gitbook/assets/image (2).png>)
+![](<../.gitbook/assets/image (2) (1).png>)
 
 也可以比较两个heap之间的diff，比如某一段时间内存突然涨上去了就可以用两个heap文件来分析
 

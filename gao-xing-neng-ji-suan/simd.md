@@ -12,7 +12,7 @@ SIMD全称Single Instruction Multiple Data（单指令流多数据流），是�
 
 #### Intel SIMD
 
-#### ![](<../.gitbook/assets/image (1).png>)
+#### ![](<../.gitbook/assets/image (1) (2).png>)
 
 1997 年，Intel 推出了第一个 SIMD 指令集 —— MultiMedia eXtensions（MMX）。MMX 指令主要使用的寄存器为 MM0 \~ MM7，大小为 64 位。
 
