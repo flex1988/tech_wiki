@@ -21,3 +21,5 @@
 * [高性能计算](gao-xing-neng-ji-suan/README.md)
   * [xbyak](gao-xing-neng-ji-suan/xbyak.md)
   * [SIMD](gao-xing-neng-ji-suan/simd.md)
+* [虚拟化](xu-ni-hua/README.md)
+  * [虚拟化技术介绍](xu-ni-hua/xu-ni-hua-ji-shu-jie-shao.md)
