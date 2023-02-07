@@ -18,6 +18,7 @@
   * [Raft论文摘要](lun-wen/raft-lun-wen-zhai-yao.md)
   * [A Binary Translator to Accelerate Development of Deep Learning Processing Library for AArch64 CPU](lun-wen/a-binary-translator-to-accelerate-development-of-deep-learning-processing-library-for-aarch64-cpu.md)
   * [The Adaptive Radix Tree: ARTful Indexing for Main-Memory Databases](lun-wen/the-adaptive-radix-tree-artful-indexing-for-main-memory-databases.md)
+  * [virtio: Towards a De-Facto Standard For Virtual I/O Devices](lun-wen/virtio-towards-a-de-facto-standard-for-virtual-i-o-devices.md)
 * [高性能计算](gao-xing-neng-ji-suan/README.md)
   * [xbyak](gao-xing-neng-ji-suan/xbyak.md)
   * [SIMD](gao-xing-neng-ji-suan/simd.md)
