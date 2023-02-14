@@ -70,7 +70,7 @@ enable\_cb是和disable\_cb相反的。driver会经常重新启用回调，只�
 
 virtio\_ring包含了3个部分：描述符数组-guest保存了length和地址对，可用的ring-guest用来表明哪些描述符可以被使用，和使用的ring-host用来表明它用了哪些描述符。ring的大小可变，但必须是2的整数幂。
 
-![](<../.gitbook/assets/image (1).png>)
+![](<../.gitbook/assets/image (2).png>)
 
 ```
 struct vring_desc
@@ -145,4 +145,15 @@ Xen没有如此天然的访问模型：没有host可以访问到其他guest的�
 对于块和网络驱动，我们仍然会深入更多细节。
 
 #### 5.1 Virtio Block Driver
+
+对于块设备，我们有一个简单的请求队列。队列里每个buffer的前16字节是一个只读的描述符：
+
+```
+struct virtio_blk_outhdr
+{
+    __u32 type;
+    __u32 ioprio;
+    __u64 sector;
+};
+```
 

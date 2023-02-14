@@ -60,7 +60,7 @@ Hypervisor类型3：软件全虚拟化
 
 #### 1.5 操作系统虚拟化
 
-![](<../.gitbook/assets/image (1) (4).png>)
+![](<../.gitbook/assets/image (1).png>)
 
 允许操作系统内核拥有彼此隔离和分割的多用户实例instance，这些实例也称之为容器。
 
@@ -82,7 +82,7 @@ KVM需要经过修改的QEMU软件（qemu-kvm）来实现虚拟机的管理，KV
 
 #### 1.7 Libvirt
 
-![](<../.gitbook/assets/image (3).png>)
+![](<../.gitbook/assets/image (8).png>)
 
 libvirt是一套免费的，开源的，支持linux下主流虚拟机管理程序的C程序库，其旨在为包括KVM在内的各种虚拟化管理程序提供一套方便，可靠的编程接口。
 

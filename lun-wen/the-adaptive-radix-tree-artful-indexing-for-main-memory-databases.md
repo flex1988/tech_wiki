@@ -77,7 +77,7 @@ Radix tree包含了两种类型的节点：内部节点，通过key的一部分�
 
 图5展示了四种节点类型，然后根据最大容量来命名。相较于用一个kv对的列表，我们把列表分成了key的部分和指针的部分。这会使我们结构更紧密，查询效率更高。
 
-![](<../.gitbook/assets/image (8).png>)
+![](<../.gitbook/assets/image (8) (1).png>)
 
 Node4：他是最小的节点类型，可以保存最多4个子指针，用一个长度为4的数组保存key，用同样长度的数组保存指针。key和指针保存在对应的位置，而且key是有序的。
 
@@ -152,7 +152,7 @@ Binary-comparable key还有其他使用场景。就像可以把基于比较的tr
 #### A. Definition
 
 转换方程t : D → {0, 1, . . . , 255} k，把D内的值转换为k长度的binary-comparable key，如果他满足下面的等式。\
-![](<../.gitbook/assets/image (2).png>)
+![](<../.gitbook/assets/image (2) (2).png>)
 
 操作符<,>,=表示输入类型的操作符可以用memcmp-k两种元素的vector来实现。如果返回0表示左右的数据都是相等的，负值代表第一个不等的元素是第一个vector小于第二个，正值相反。
 
