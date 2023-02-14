@@ -1,6 +1,6 @@
 # virtio: Towards a De-Facto Standard For Virtual I/O Devices
 
-#### 摘要
+### 摘要
 
 Linux内核现在支持了最少8种虚拟化系统：Xen，KVM，VMware's VMI，IBM的System p，IBM System z，用户态Linux，lguest和IBM iSeries。看起来会出现更多类似的系统，每个系统都有它独立的块设备，网络，终端以及不同功能和优化的驱动。
 
@@ -157,3 +157,18 @@ struct virtio_blk_outhdr
 };
 ```
 
+这个类型表明不管它是一个读还是写还是通用的SCSI命令，或是一个写barrier应该先于这个命令。IO的优先级允许guest提示请求的相对优先级，现在的实现基本都会忽略这个，读写sector是512字节的offset。
+
+差不多描述符的字节不是只读就是只写，依赖于请求的类型，总长度决定了请求的大小。最后一个字节是只写的，表明了请求是成功（0）还是失败（1），亦或是不支持（2）。
+
+块设备可以支持barrier，简单的SCSI命令（大部分用于弹出虚拟的CDROM）。对于更精确的用途来说，可以实现一个virtio上的SCSI HBA。
+
+#### 5.1.1 Virtio Block Mechanics
+
+为了聚焦于这些机制，让我们过一下virtio block驱动做一个单个block读的概念路径，用virtio\_ring作为传输例子。开始时，guest有一个空的buffer，数据可以被读进去。我们分配了一个struct virtio\_blk\_outhdr和请求metadata，和一个单独的字节去接受状态（成功或失败）像表2那样。
+
+![](<../.gitbook/assets/image (3).png>)
+
+我们把请求的这三个部分放置到描述符表三个空闲的entry里，然后把他们链接起来。在这个例子里，我们读的buffer是物理连续的：如果不是，我们要用到多个描述符表的entry。header是只读的，空的buffer和状态字节是只写的，像表3这样。
+
+![](<../.gitbook/assets/image (1).png>)

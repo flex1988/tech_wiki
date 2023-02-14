@@ -60,7 +60,7 @@ Hypervisor类型3：软件全虚拟化
 
 #### 1.5 操作系统虚拟化
 
-![](<../.gitbook/assets/image (1).png>)
+![](<../.gitbook/assets/image (1) (4).png>)
 
 允许操作系统内核拥有彼此隔离和分割的多用户实例instance，这些实例也称之为容器。
 
