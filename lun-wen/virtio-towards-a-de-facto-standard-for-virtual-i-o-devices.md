@@ -70,7 +70,7 @@ enable\_cb是和disable\_cb相反的。driver会经常重新启用回调，只�
 
 virtio\_ring包含了3个部分：描述符数组-guest保存了length和地址对，可用的ring-guest用来表明哪些描述符可以被使用，和使用的ring-host用来表明它用了哪些描述符。ring的大小可变，但必须是2的整数幂。
 
-![](<../.gitbook/assets/image (2).png>)
+![](<../.gitbook/assets/image (2) (3).png>)
 
 ```
 struct vring_desc
@@ -171,4 +171,41 @@ struct virtio_blk_outhdr
 
 我们把请求的这三个部分放置到描述符表三个空闲的entry里，然后把他们链接起来。在这个例子里，我们读的buffer是物理连续的：如果不是，我们要用到多个描述符表的entry。header是只读的，空的buffer和状态字节是只写的，像表3这样。
 
+![](<../.gitbook/assets/image (1) (5).png>)
+
+![](<../.gitbook/assets/image (2).png>)
+
+一旦做了这些以后，描述符就可以被标记为available像图4一样。这通过把描述符的索引头放到available ring里来做到，发起一个memory barrier，然后增长索引。kick用来通知host一个请求正在排队（实际上，我们的driver会把所有的请求都放到ring后，在发起一个kick）。
+
+在未来的一个时刻，请求像图5一样完成：buffer被填上了，状态字节也被更新成成功状态。这时，描述符头被从used ring返回，guest会得到通知。块驱动回调会重复的调用get\_buf来检查哪些请求完成了，知道get\_buf返回NULL。
+
 ![](<../.gitbook/assets/image (1).png>)
+
+#### 5.2 Virtio Network Driver
+
+网络设备用了两个队列：一个是发送，一个是接收。像块驱动一样，每个网络buffer以一个header起始，允许checksum offload和TCP/UDP段的offload。segmentation的offload被开发用于网络硬件，用于解决大的MTU和1500字节的packet错配的问题；少的packet意味着更少的PCI传输。在一个虚拟的环境里，它意味着更少的虚拟机调用和性能的提升。
+
+```
+struct virtio_net_hdr
+{
+// Use csum_start, csum_offset
+#define VIRTIO_NET_HDR_F_NEEDS_CSUM 1
+    __u8 flags;
+#define VIRTIO_NET_HDR_GSO_NONE     0
+#define VIRTIO_NET_HDR_GSO_TCPV4    1
+#define VIRTIO_NET_HDR_GSO_UDP      3
+#define VIRTIO_NET_HDR_GSO_TCPV6    4
+#define VIRTIO_NET_HDR_GSO_ECN      0x80
+    __u8 gso_type;
+    __u16 hdr_len;
+    __u16 gso_size;
+    __u16 csum_start;
+    __u16 csum_offset;
+};
+```
+
+2.6.24的virtio网络驱动有一些基础设施TSO在packet上，但由于他不会申请大的接收buffer，所以也不能用。我们会看下怎么把这个变更用上。
+
+一个有趣的点是网络驱动会把回调放到传输virtqueue上：跟块驱动不同，它不关注packet什么时候完成。异常点是队列满的时候：驱动会重新启用回调，当buffer可用的时候可以尽快传输。
+
+### 6. VIRTIO\_PCI: A PCI IMPLEMENTATION OF VRING AND VIRTIO
