@@ -257,3 +257,29 @@ Qumranet对于Windows guest发布了beta版本的virtio\_pci驱动。KVM用QEMU�
 
 #### 8.1 Adaption Existing Transports to Use Virtio Drivers
 
+你会注意到所有的例子驱动都写了一个定义的header在buffer的前面：这像一个ABI，对于KVM和lguest来说确实如此，就像他们被直接传到host一样。
+
+然而，virtio驱动一个主要的目的是让他们在不同的传输层也能工作，通过配置不通的ops和feature bit就能实现。比如，如果网络驱动告诉host不支持TSO和checksum offload，整个网络header在发送时就可以忽略了，也能在接收时实现零拷贝。这会在add\_buf里面实现。如果header的格式不同，或者等价的信息要其他方式发送，也可以用这种观点解释。
+
+我们面前的一个任务是为其他hypervisor创建一个shim层，可以跑测试和benchmark，来说服那些维护者原因切换到virtio的驱动上来。Xen的驱动是最有挑战性的：不只是他们被优化到了一个相当的程度，他们也有着相当多的功能还支持了一个断链和重连的模型，现在virtio的驱动还不能支持。
+
+替换掉现有的驱动是一个微不足道的收益，但有两个场景我们认为virtio设施是非常有竞争力的。第一个是当虚拟化技术增加一个新的virtio已支持的虚拟设备类型时，适配的工作比从头重写一个简单太多了。比如，现在有一个可以给guest提供随机数的virtio entropy驱动，已经merge到了Linux 2.6.27版本了。
+
+第二个场景是当新的虚拟化传输想要支持Linux；我们认识他们只要用了vring就可以了，或者至少能随便得到现有的驱动，至少比在他们的只是领域范围外实现和支持Linux驱动要简单的多。
+
+#### 9. FUTURE WORK
+
+virtio和驱动仍在开发中；ABI在2.6.25中已经官方发布了，未来仍会做一些优化等工作。怎么在保证兼容性的前提下增加新功能是一个值得考虑的问题，现在进行的一些试验在未来可能也会增加进去。
+
+#### 9.1 Feature Bits and Forward Compatibility
+
+当然不是所有的host会支持所有的功能，不管是他们太老了还是不支持一些加速方法，比如checksum offload和TSO。
+
+我们已经了解过了feature bit的机制，实现更值得提起：lguest和virtio\_pci用了两个bitmap，一个用来做host的feature表示，另一个用来表示driver接受的feature。当VIRTIO\_CONFIG\_S\_DRIVER\_OK状态位被设置了的时候，host可以检查接受了的feature集合，就可以看到guest驱动可以适配什么feature了。
+
+目前为止所有定义的feature特定于一个设备类型，比如host在块设备里支持barrier。我们也为设备无关的feature预留了几个bits。因为我们不想随机的增加feature bits，对于复杂的guest和host交互场景来说，我们允许试验。
+
+#### 9.2 Inter-guest Communication
+
+让host支持guest间的交互非常简单；有一个试验的lguest的patch就是做这个事情。每个guest的启动进程映射了其他guest和自己的内存，然后用一个管道去通知其他启动guest间的I/O。guest协商用哪个virtqueue来加入，然后就很简单了：从guest的virtqueue中得到一个buffer，其他guest的virtqueue，根据buffer的flag是读还是写在它们之间拷贝数据。这个机制完全独立于virtqueue的用途；virtio\_net协议是对称的，所以不用guest的变动就可以在guest间点对点的网络通信。这个代码可以允许一个guest作为另一个guest的一个块设备或者终端设备，如果另外一个guest有对应的驱动的话。
+
