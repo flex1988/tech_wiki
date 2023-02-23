@@ -209,3 +209,51 @@ struct virtio_net_hdr
 一个有趣的点是网络驱动会把回调放到传输virtqueue上：跟块驱动不同，它不关注packet什么时候完成。异常点是队列满的时候：驱动会重新启用回调，当buffer可用的时候可以尽快传输。
 
 ### 6. VIRTIO\_PCI: A PCI IMPLEMENTATION OF VRING AND VIRTIO
+
+目前为止我们已经两种可以统一虚拟I/O的方法。首先，用Linux内核中的virtio驱动然后提供适当的ops操作去支持特定的传输工作。其次，用virtio\_ring的框架，实现传输。我们现在说明设备探测和完整virtual I/O ABI的配置问题。
+
+大部分全虚拟化hosts已经有了一些形式的PCI模拟，以及大部分guests有方法增加第三方的PCI驱动，很明显我们应该提供一个标准的virtio-over-PCI的定义，这样能给hosts和guests带来最大的便利。这是一个相对直接的vring实现，加上用一个I/O region的配置。比如，virtio\_pci 网络设备用了Linux内核中virtio\_net API和ABI中的结构体virtio\_net\_hdr。这些结构是专门被设计来这么用的，它也让这种透传的方式更加简单。
+
+启动了KVM项目的Qumranet，贡献了他们的设备ID（vendor ID 0x1AF4）从0x1000到0x10FF。PCI设备子系统vendor和设备ids变成了virtio类型和vendor字段，所以PCI驱动不需要知道virtio类型的意义；在Linux里，这意味着它创建了一个virtio\_device的结构体，并把它注册到了virtio的总线上，virtio驱动可以来找到它。
+
+I/O空间可能会需要特别的访问符，根据不通的平台，一般看起来像下面的结构体：
+
+```
+struct virtio_pci_io
+{
+    __u32 host_features;
+    __u32 guest_features;
+    __u32 vring_page_num;
+    __u16 vring_ring_size;
+    __u16 vring_queue_selector;
+    __u16 vring_queue_notifier;
+    __u8 status;
+    __u8 pci_isr;
+    __u8 config[];
+}
+```
+
+发布和接收的bits是前2个32位的字段在I/O空间里：最后一个bit可以用来扩展它什么时候可用。vring\_queue\_selector用来得到设备的virtqueues：如果vring\_ring\_size是0的话，queue不存在。否则，guest期望写到它申请的queue的page地址，根据vring\_page\_size：这不像lguest的实现，host为ring申请空间。
+
+vring\_queue\_notifier用来告诉host当一个queue有新buffer时，status字节用来写标准的virtio状态位，0用来重置设备。pci\_isr字段有一个副作用就是清空在读上的中断；非0意味着设备的一个virtqueue在等待了，第二个bit意味着设备的配置发生了变更。
+
+ring自己包含了『guest-physical』的地址：不管是KVM还是lguest，都有一个简单的偏移从他们的地址到host进程的虚拟内存。所以host只需要检查地址是否超过了guest的内存大小就好了，然后就把地址对应的的内容转给readv和writev：如果碰到了一个内存空洞，就会返回一个-EFAULT，然后host可以给guest返一个错。
+
+最后，实现一个PCI virtio驱动是一个相对简单的问题；它大概有450行代码，或者170个分号在Linux 2.6.25里。
+
+### 7. PERFORMANCE
+
+不好意思，当前阶段关于性能现在只有很少的数据，除了一些简单的测试确保我们的性能不是很差。对于我们把把目标设置成虚拟I/O在Linux guest跑在一个Linux host上来说没有任何阻碍：因为硬件的支持也提升了，我们期望接近于裸的速度。
+
+当前网络性能非常受关注：支持多TSO的配置是当务之急，这可以去除掉KVM QEMU框架的一些复制。一旦完成了这个，我们期望探索控制通知来得到更多的注意：在接收的负载下我们的Linux驱动将会进入polling模式，这在标准的高性能NIC来说通常做法，但在包的传输上减少通知的方法仍然是很原始的。
+
+### 8. ADOPTION
+
+现在KVM和lguest都把virtio作为他们原生的传输层；对于KVM意味着，在32位和64位 x86，System z, IA64和PowerPC上支持Linux virtio驱动。lguest只是32位的x86，但已有patch将它扩展到了64位，这或许会在明年发布。
+
+Qumranet对于Windows guest发布了beta版本的virtio\_pci驱动。KVM用QEMU模拟器去支持模拟设备，KVM版本的QEMU有virtio的host支持，但没有过多的优化；这是一个需要大量工作的领域。lguest的启动器也支持了一个很小的virtio实现。我们还不清楚其他的host实现，目前没有在内核的host实现，用来得到最后几个百分点性能的提升。
+
+我们期望看到更多操作系统的virtio guest驱动，因为virtio驱动很容易写。
+
+#### 8.1 Adaption Existing Transports to Use Virtio Drivers
+
