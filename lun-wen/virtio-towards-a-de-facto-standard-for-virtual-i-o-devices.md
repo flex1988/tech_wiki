@@ -267,7 +267,7 @@ Qumranet对于Windows guest发布了beta版本的virtio\_pci驱动。KVM用QEMU�
 
 第二个场景是当新的虚拟化传输想要支持Linux；我们认识他们只要用了vring就可以了，或者至少能随便得到现有的驱动，至少比在他们的只是领域范围外实现和支持Linux驱动要简单的多。
 
-#### 9. FUTURE WORK
+### 9. FUTURE WORK
 
 virtio和驱动仍在开发中；ABI在2.6.25中已经官方发布了，未来仍会做一些优化等工作。怎么在保证兼容性的前提下增加新功能是一个值得考虑的问题，现在进行的一些试验在未来可能也会增加进去。
 
@@ -283,3 +283,32 @@ virtio和驱动仍在开发中；ABI在2.6.25中已经官方发布了，未来�
 
 让host支持guest间的交互非常简单；有一个试验的lguest的patch就是做这个事情。每个guest的启动进程映射了其他guest和自己的内存，然后用一个管道去通知其他启动guest间的I/O。guest协商用哪个virtqueue来加入，然后就很简单了：从guest的virtqueue中得到一个buffer，其他guest的virtqueue，根据buffer的flag是读还是写在它们之间拷贝数据。这个机制完全独立于virtqueue的用途；virtio\_net协议是对称的，所以不用guest的变动就可以在guest间点对点的网络通信。这个代码可以允许一个guest作为另一个guest的一个块设备或者终端设备，如果另外一个guest有对应的驱动的话。
 
+对于不受信任传输的效率有一个细节但重要的协议考虑。设想下这个guest间的网络协议场景，guest收到一个声称有1514字节的包。如果所有的1514字节没有都被拷贝进来，接收的guest会把buffer里的老数据当成包剩余的部分。这个数据可能会泄露了用户的数据，或者来自于guest外部。为了防止这个问题，guest会清理所有的接收buffer，即使是麻烦和低效。
+
+这也是为什么vring里的used ring包含了一个长度的字段。只要拷贝进来的数据是从一个被信任的数据源，我们可以避免做这件事。在lguest的原型里，启动器做了拷贝，所以可以信任它。一个virtio传输的实现只要连接到了host或者另一个可信任的数据源也可以只提供长度字段。如果传输层连接到了一个不被信任的数据源，也不能确保拷贝进来的数据长度是多少，那么他就必须在把buffer暴露到对端之前重置整块写buffer。这远比要求驱动来做安全的多，特别是传输层不会有这种问题。
+
+当一个host为了guest间的I/O可以方便的联合起来两个vring，协商feature更麻烦一些。我们想要给每个guest提供所有的功能，这样它们可以享受到便利，比如TSO和checksum offload，但如果一个guest关闭了我们已经提供给其他guest的feature，我们要不就在每个I/O间做一些转换，要不就热插拔一下设备，改变一下提供的feature。
+
+我们思考的方案是增加一个多轮的协商功能：如果guest知晓了功能，在驱动通过设置状态字段去通知feature后，它会希望feature被重新加上，知道最后多轮feature消失。我们会首先公布一个最小的feature集合，通过多轮的bit：如果所有的guest都知晓了，我们会公布所有的feature，然后依次的去掉有个别guest不接受的feature，直到大家都满意为止。这可能会是我们第一个非设备的feature bit。
+
+#### 9.3 Tun Device  Vring Support
+
+QEMU/KVM和lguest用户层的virtio host设备用的是Linux tun设备；这是一个用户层的网络接口，驱动读写来自于ethernet的网络包。我们提了一个简单的patch去使这个设备支持virtio\_ring header，这样我们可以测试vritio网络驱动的GSO的支持，Anthony Liguori和Herbert Xu把它引入到了KVM里。根据Herbert提供的数据，从guest到host的TCP流可以和Xen这种全虚拟化相比较，速度是guest回环设备的一半。
+
+这个版本在传输时数据拷贝了两次：一次是在QEMU内部，一次在kernel里。前者是QEMU内部的架构限制，后者更难以解决。如果我们想要避免拷贝数据，我们在写操作时必须把用户层的页面pin住即使他们不被任何包引用。考虑到本地socket接收或者对于非GSO适配的设备有大包的拆分，创建一个析构回调不太可行。特别是，它会耗费非常长的时间来完成；如果没人来读一个包甚至会一直卡在本地socket里。
+
+幸运的是，我们有一个方案来解决这个问题：vring！它可以处理乱序的buffer结束，很有效率，有一个设计的很好的ABI。因此我们有一个'/dev/vring'的Patch创建了一个文件描述符关联了一个vring ringbuffer到用户的内存中。这个文件描述符可以用来轮询（是否有buffer被用了），读（更新最后看见的index和清理轮询的flag）和写（告诉vringfd的另一端有新的buffer可以写了）。最后一个小patch增加了一些方法把vringfd附加到tun设备的接收和传输上。
+
+我们也实现了一个ioctl去设置vring可以访问的offset和bounds；有了这个guest的网络vring可以直接暴露给host kernel的tap设备。终极的效率试验会是避免用户空间的操作，这会非常简单一但其他方面具备了的话。
+
+### 10. CONCLUSIONS
+
+就我们现在看到的这些虚拟I/O解决方案来说，通常的形式也清晰了：一个ring buffer，通知机制，一些feature bits。事实上，他们看起来更像高速物理设备：你可以认为他们可以用DMA的方式读或者写你的内存，你几乎不怎么和它们交互。这些实现的质量看起来更有趣，这意味着时间才是检验的唯一标准。
+
+你将会确实的注意到virtio：它有中断，设备features，配置和DMA rings。有很多类似的概念比如driver作者，一个操作系统的设备架构用来去容纳他们。如果virtio驱动变成了Linux虚拟化环境下的标准，它会栓住了虚拟I/O设计的进程。没有这些指引就会变得非常混乱，集成到guest os变成了一个事后的想法，结果就是驱动看起来像是掉到了一个外星宇宙，代码也不容易看懂像是没有经过很好的训练。
+
+在虚拟I/O里还有很多事情要做，但如果我们发布了一个坚固的基础，创新的过程就会加速，不用为了重新发明那些不感兴趣的配置和bit发布等功能而深陷泥潭。我们希望virtio会使人们相信他们可以完成一个虚拟I/O系统，可以支持未来的虚拟设备。
+
+### 11. ACKNOWLEDGMENTS
+
+作者感谢Muli Ben-Yehuda和Eric Van Hensbergen的参与，virtio值得一篇论文，Anthony Ligruori的校阅，操作系统reviewer的校阅。特别感谢所有的KVM开发者背后默默的支持。
