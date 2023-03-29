@@ -70,7 +70,7 @@ enable\_cb是和disable\_cb相反的。driver会经常重新启用回调，只�
 
 virtio\_ring包含了3个部分：描述符数组-guest保存了length和地址对，可用的ring-guest用来表明哪些描述符可以被使用，和使用的ring-host用来表明它用了哪些描述符。ring的大小可变，但必须是2的整数幂。
 
-![](<../.gitbook/assets/image (2) (3).png>)
+![](<../.gitbook/assets/image (2) (3) (1).png>)
 
 ```
 struct vring_desc
@@ -173,7 +173,7 @@ struct virtio_blk_outhdr
 
 ![](<../.gitbook/assets/image (1) (5).png>)
 
-![](<../.gitbook/assets/image (2).png>)
+![](<../.gitbook/assets/image (2) (3).png>)
 
 一旦做了这些以后，描述符就可以被标记为available像图4一样。这通过把描述符的索引头放到available ring里来做到，发起一个memory barrier，然后增长索引。kick用来通知host一个请求正在排队（实际上，我们的driver会把所有的请求都放到ring后，在发起一个kick）。
 
