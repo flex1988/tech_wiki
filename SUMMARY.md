@@ -6,6 +6,7 @@
   * [tcmalloc解析2](tcmalloc-jie-xi/tcmalloc-jie-xi-2.md)
   * [tcmalloc解析3 sizemap](tcmalloc-jie-xi/tcmalloc-jie-xi-3-sizemap.md)
 * [Build](bian-yi-gou-jian/README.md)
+  * [LIBRARY\_PATH和LD\_LIBRARY\_PATH](bian-yi-gou-jian/librarypath-he-ldlibrarypath.md)
   * [Ninja](bian-yi-gou-jian/ninja.md)
   * [C++ Library on Android with Android Studio](bian-yi-gou-jian/c++-library-on-android-with-android-studio.md)
 * [OS](cao-zuo-xi-tong/README.md)
