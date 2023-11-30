@@ -50,7 +50,7 @@ Linux kernel被移植到了很多平台；官方的kernel树包含了24种架构
 
 一个virtqueue是一个简单的队列，里面是guest生产的buffer，消费的是host。每个buffer都是一个分散聚集的数组，包含了可读和可写的部分：数据的结构依赖于设备的类型。virtqueue的操作接口如下：
 
-![](../.gitbook/assets/image.png)
+![](<../.gitbook/assets/image (6).png>)
 
 add\_buf是用来添加一个新的buffer到队列中；data参数是由驱动提供的非空token，当buffer被消费时返回。kick通知对端（比如host）在buffer增加以后；一个kick之前可以添加多个buffer。这对通知来说很重要，因为通常都会引起guest昂贵的exit。
 
