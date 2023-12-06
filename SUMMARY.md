@@ -31,3 +31,5 @@
   * [Ext2 Filesystem](wen-jian-xi-tong/ext2-filesystem.md)
 * [debug](debug/README.md)
   * [STL GDB](debug/stl-gdb.md)
+* [硬件](ying-jian/README.md)
+  * [SSD盘符漂移怎么办](ying-jian/ssd-pan-fu-piao-yi-zen-mo-ban.md)
