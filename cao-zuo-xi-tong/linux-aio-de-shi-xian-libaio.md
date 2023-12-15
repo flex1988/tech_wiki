@@ -143,3 +143,5 @@ int main() {
 	return 0;
 }
 ```
+
+使用Libaio的时候，打开盘或文件最好用O\_DIRECT，内存buffer必须是4k对齐的。

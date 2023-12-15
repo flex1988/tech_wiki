@@ -17,6 +17,7 @@
   * [文件系统](cao-zuo-xi-tong/wen-jian-xi-tong.md)
   * [Log把磁盘写满了会有什么后果](cao-zuo-xi-tong/log-ba-ci-pan-xie-man-le-hui-you-shi-mo-hou-guo.md)
   * [Linux AIO的实现Libaio](cao-zuo-xi-tong/linux-aio-de-shi-xian-libaio.md)
+  * [如何实现一个FIO插件](cao-zuo-xi-tong/ru-he-shi-xian-yi-ge-fio-cha-jian.md)
 * [Paper](lun-wen/README.md)
   * [Raft论文摘要](lun-wen/raft-lun-wen-zhai-yao.md)
   * [A Binary Translator to Accelerate Development of Deep Learning Processing Library for AArch64 CPU](lun-wen/a-binary-translator-to-accelerate-development-of-deep-learning-processing-library-for-aarch64-cpu.md)
