@@ -41,3 +41,13 @@ void swap(Type& x, Type& y) noexcept // C++11
 }
 ```
 
+### 3 带条件的noexcept
+
+也可以在noexcept里加入条件，比如下面，表示x.swap(y)不会抛异常
+
+```
+void swap(Type& x,Type& y) noexcept(x.swap(y)) // C++11
+{
+    x.swap(y);
+}
+```
