@@ -27,6 +27,17 @@ C++中的异常处理是在运行时而不是编译时检测的。为了实现�
 1. 一个函数可能会抛出异常
 2. 一个函数不会抛出异常
 
-后面的方式可以用一些关键词标示，这样编译器可以做相应的优化，在以往的C++版本中用throw表示，在C++11中被noexcept代替
+后面的方式可以用一些关键词标示，这样编译器可以做相应的优化，在以往的C++版本中用throw表示，在C++11中被noexcept代替，不会抛出异常用throw()，可能会抛出异常用throw(...)
 
-sssdasdasadsasdasd=s
+```
+void swap(Type& x, Type& y) throw()  // C++11之前
+{
+    x.swap(y);
+}
+
+void swap(Type& x, Type& y) noexcept // C++11
+{
+    x.swap(y);
+}
+```
+
