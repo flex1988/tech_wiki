@@ -34,3 +34,5 @@
   * [STL GDB](debug/stl-gdb.md)
 * [硬件](ying-jian/README.md)
   * [SSD盘符漂移怎么办](ying-jian/ssd-pan-fu-piao-yi-zen-mo-ban.md)
+* [C++](c++/README.md)
+  * [C++新特性 noexcept](c++/c++-xin-te-xing-noexcept.md)
