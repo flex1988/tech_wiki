@@ -33,6 +33,7 @@
 * [debug](debug/README.md)
   * [STL GDB](debug/stl-gdb.md)
 * [硬件](ying-jian/README.md)
+  * [如何理解NVMe SSD](ying-jian/ru-he-li-jie-nvme-ssd.md)
   * [SSD盘符漂移怎么办](ying-jian/ssd-pan-fu-piao-yi-zen-mo-ban.md)
 * [C++](c++/README.md)
   * [C++匿名命名空间](c++/c++-ni-ming-ming-ming-kong-jian.md)
