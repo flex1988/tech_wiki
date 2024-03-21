@@ -40,4 +40,5 @@
   * [C++匿名命名空间](c++/c++-ni-ming-ming-ming-kong-jian.md)
   * [C++11 新特性 constexpr](c++/c++11-xin-te-xing-constexpr.md)
   * [C++11 新特性 final](c++/c++11-xin-te-xing-final.md)
+  * [C++11 禁止copy和assign](c++/c++11-jin-zhi-copy-he-assign.md)
   * [C++11 新特性 noexcept](c++/c++11-xin-te-xing-noexcept.md)
