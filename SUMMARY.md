@@ -38,6 +38,6 @@
   * [SSD盘符漂移怎么办](ying-jian/ssd-pan-fu-piao-yi-zen-mo-ban.md)
 * [C++](c++/README.md)
   * [C++匿名命名空间](c++/c++-ni-ming-ming-ming-kong-jian.md)
-  * [C++11新特性 constexpr](c++/c++11-xin-te-xing-constexpr.md)
+  * [C++11 新特性 constexpr](c++/c++11-xin-te-xing-constexpr.md)
   * [C++11 新特性 final](c++/c++11-xin-te-xing-final.md)
   * [C++11 新特性 noexcept](c++/c++11-xin-te-xing-noexcept.md)
