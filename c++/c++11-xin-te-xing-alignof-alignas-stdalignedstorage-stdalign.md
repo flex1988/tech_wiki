@@ -107,10 +107,30 @@ sizeof(s) 8 alignof(s) 4 sizeof(s1) 16 alignof(s1) 16
 std::aligned\_storage是C++11中新引入的一个用于满足内存对齐要求的静态内存分配类，位于type\_traits
 
 ```
-template<std::size_t len, std::size_t align>
-struct aligned_storage
+#include <iostream>
+#include <type_traits>
+
+int main()
 {
-};
+    struct s
+    {
+        char x1;
+        char x2;
+        int x3;
+    };
+
+    std::aligned_storage<sizeof(s), 32>::type aligned_s_32;
+    std::aligned_storage<sizeof(s), 64>::type aligned_s_64;
+    std::aligned_storage<sizeof(s), 128>::type aligned_s_128;
+
+    std::cout << " aligned_storage<32> " << &aligned_s_32
+        << " aligned_storage<64> " << &aligned_s_64
+        << " aligned_storage<128> " << &aligned_s_128 << std::endl;
+
+    return 0;
+}
+
+aligned_storage<32> 0x7ffc80ea81a0 aligned_storage<64> 0x7ffc80ea81c0 aligned_storage<128> 0x7ffc80ea8200
 ```
 
 当类std::aligned\_storage的对象构造完成时，就分配了长度为len，而且内存地址满足algin的对齐要求。
@@ -130,3 +150,4 @@ void* align(std::size_t alignment,
              void*& ptr,
              std::size_t& space);
 ```
+
