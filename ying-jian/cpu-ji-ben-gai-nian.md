@@ -40,7 +40,7 @@ CPU芯片是要通过主板上的插槽链接到服务器上的，这种插槽�
 
 Hyper threading 技术使操作系统以为实际的 CORE 数是物理 CORE 数的两倍，当程序频繁加载数据等操作时，可以把核心让出来给另一个线程，因此可以提升性能。
 
-以下图为例，Architecture代表了芯片的架构，CPU 逻辑核96个，2个 socket，每个 socket 24个物理核。
+以下图为例，Architecture代表了芯片的架构，CPU 逻辑核96个，2个 socket，每个 socket 24个物理核，Thread(s) per core:    2说明开启了hyper threading。
 
 <pre><code>Architecture:          x86_64
 CPU op-mode(s):        32-bit, 64-bit
