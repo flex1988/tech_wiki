@@ -40,5 +40,31 @@ CPU芯片是要通过主板上的插槽链接到服务器上的，这种插槽�
 
 Hyper threading 技术使操作系统以为实际的 CORE 数是物理 CORE 数的两倍，当程序频繁加载数据等操作时，可以把核心让出来给另一个线程，因此可以提升性能。
 
-#### CPU 信息解读
+以下图为例，Architecture代表了芯片的架构，CPU 逻辑核96个，2个 socket，每个 socket 24个物理核。
 
+<pre><code>Architecture:          x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte Order:            Little Endian
+CPU(s):                96
+On-line CPU(s) list:   0-95
+<strong>Thread(s) per core:    2
+</strong>Core(s) per socket:    24
+Socket(s):             2
+NUMA node(s):          2
+Vendor ID:             GenuineIntel
+CPU family:            6
+Model:                 85
+Model name:            Intel(R) Xeon(R) Platinum 8255C CPU @ 2.50GHz
+Stepping:              7
+CPU MHz:               3100.079
+CPU max MHz:           2501.0000
+CPU min MHz:           1000.0000
+BogoMIPS:              5000.00
+Virtualization:        VT-x
+L1d cache:             32K
+L1i cache:             32K
+L2 cache:              1024K
+L3 cache:              36608K
+NUMA node0 CPU(s):     0-23,48-71
+NUMA node1 CPU(s):     24-47,72-95
+</code></pre>
