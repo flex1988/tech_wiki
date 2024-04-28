@@ -33,6 +33,7 @@
 * [debug](debug/README.md)
   * [STL GDB](debug/stl-gdb.md)
 * [硬件](ying-jian/README.md)
+  * [CPU 基本概念](ying-jian/cpu-ji-ben-gai-nian.md)
   * [硬盘的接口](ying-jian/ying-pan-de-jie-kou.md)
   * [如何理解NVMe SSD](ying-jian/ru-he-li-jie-nvme-ssd.md)
   * [SSD盘符漂移怎么办](ying-jian/ssd-pan-fu-piao-yi-zen-mo-ban.md)
