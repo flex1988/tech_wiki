@@ -179,7 +179,7 @@ struct virtio_blk_outhdr
 
 在未来的一个时刻，请求像图5一样完成：buffer被填上了，状态字节也被更新成成功状态。这时，描述符头被从used ring返回，guest会得到通知。块驱动回调会重复的调用get\_buf来检查哪些请求完成了，知道get\_buf返回NULL。
 
-![](<../.gitbook/assets/image (1).png>)
+![](<../.gitbook/assets/image (1) (2).png>)
 
 #### 5.2 Virtio Network Driver
 
