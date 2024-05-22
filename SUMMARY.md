@@ -35,6 +35,8 @@
 * [debug](debug/README.md)
   * [STL GDB](debug/stl-gdb.md)
 * [硬件](ying-jian/README.md)
+  * [1 NVMe – Controller Capabilities](ying-jian/1-nvme-controller-capabilities.md)
+  * [通过sysfs 访问 PCI 设备资源](ying-jian/tong-guo-sysfs-fang-wen-pci-she-bei-zi-yuan.md)
   * [CPU 基本概念](ying-jian/cpu-ji-ben-gai-nian.md)
   * [硬盘的接口](ying-jian/ying-pan-de-jie-kou.md)
   * [如何理解NVMe SSD](ying-jian/ru-he-li-jie-nvme-ssd.md)

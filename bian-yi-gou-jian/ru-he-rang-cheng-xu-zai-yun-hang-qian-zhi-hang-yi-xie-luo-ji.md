@@ -27,5 +27,5 @@ static void fio_exit fio_nvmed_unregister(void)
 
 他们的作用是把函数标记为需要被\_\_libc\_csu\_init 调用的函数类型，objdump -d 可以看到函数在 section text.startup
 
-![](../.gitbook/assets/image.png)
+![](<../.gitbook/assets/image (2).png>)
 

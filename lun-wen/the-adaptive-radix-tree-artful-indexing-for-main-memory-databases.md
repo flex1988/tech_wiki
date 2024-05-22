@@ -152,7 +152,7 @@ Binary-comparable key还有其他使用场景。就像可以把基于比较的tr
 #### A. Definition
 
 转换方程t : D → {0, 1, . . . , 255} k，把D内的值转换为k长度的binary-comparable key，如果他满足下面的等式。\
-![](<../.gitbook/assets/image (2) (2).png>)
+![](<../.gitbook/assets/image (2) (2) (1).png>)
 
 操作符<,>,=表示输入类型的操作符可以用memcmp-k两种元素的vector来实现。如果返回0表示左右的数据都是相等的，负值代表第一个不等的元素是第一个vector小于第二个，正值相反。
 
