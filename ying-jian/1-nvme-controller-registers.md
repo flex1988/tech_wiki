@@ -22,3 +22,9 @@ Controller registers位于 PCIe Conf space 里的 MLBAR/MUBAR register(BAR0/BAR1
 
 #### 3 Offset 14h: CC – Controller Configuration
 
+controller configuration 寄存器
+
+#### 4 Offset 1Ch: CSTS – Controller Status
+
+#### 寄存器的定义在 spdk 的源码include/spdk/nvme\_spec.h 中也有完整的定义，类型spdk\_nvme\_cap\_register
+
