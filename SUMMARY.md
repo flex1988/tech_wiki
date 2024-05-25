@@ -35,6 +35,7 @@
 * [debug](debug/README.md)
   * [STL GDB](debug/stl-gdb.md)
 * [硬件](ying-jian/README.md)
+  * [SPDK 的写 buffer 为什么必须是来自于大页内存](ying-jian/spdk-de-xie-buffer-wei-shi-mo-bi-xu-shi-lai-zi-yu-da-ye-nei-cun.md)
   * [1 NVMe – Controller Registers](ying-jian/1-nvme-controller-registers.md)
   * [通过sysfs 访问 PCI 设备资源](ying-jian/tong-guo-sysfs-fang-wen-pci-she-bei-zi-yuan.md)
   * [CPU 基本概念](ying-jian/cpu-ji-ben-gai-nian.md)
