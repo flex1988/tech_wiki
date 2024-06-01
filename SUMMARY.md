@@ -50,6 +50,7 @@
   * [PCIe Configuration Space](nvme-specification-he-yong-hu-tai-qu-dong/pcie-configuration-space.md)
   * [SPDK 的写 buffer 为什么必须是来自于大页内存](nvme-specification-he-yong-hu-tai-qu-dong/spdk-de-xie-buffer-wei-shi-mo-bi-xu-shi-lai-zi-yu-da-ye-nei-cun.md)
   * [1 NVMe – Controller Registers](nvme-specification-he-yong-hu-tai-qu-dong/1-nvme-controller-registers.md)
+  * [NVMe Controller shutdown](nvme-specification-he-yong-hu-tai-qu-dong/nvme-controller-shutdown.md)
   * [通过sysfs 访问 PCI 设备资源](nvme-specification-he-yong-hu-tai-qu-dong/tong-guo-sysfs-fang-wen-pci-she-bei-zi-yuan.md)
 * [性能优化](xing-neng-you-hua/README.md)
   * [把程序的代码段和BSS段放到大页内存](xing-neng-you-hua/ba-cheng-xu-de-dai-ma-duan-he-bss-duan-fang-dao-da-ye-nei-cun.md)
