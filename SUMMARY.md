@@ -21,6 +21,7 @@
   * [如何实现一个FIO插件](cao-zuo-xi-tong/ru-he-shi-xian-yi-ge-fio-cha-jian.md)
   * [如何更换linux kernel](cao-zuo-xi-tong/ru-he-geng-huan-linux-kernel.md)
 * [Paper](lun-wen/README.md)
+  * [Performance Characterization of Modern Storage Stacks: POSIX I/O, libaio,SPDK,and io\_uring](lun-wen/performance-characterization-of-modern-storage-stacks-posix-i-o-libaio-spdk-and-io\_uring.md)
   * [Raft论文摘要](lun-wen/raft-lun-wen-zhai-yao.md)
   * [A Binary Translator to Accelerate Development of Deep Learning Processing Library for AArch64 CPU](lun-wen/a-binary-translator-to-accelerate-development-of-deep-learning-processing-library-for-aarch64-cpu.md)
   * [The Adaptive Radix Tree: ARTful Indexing for Main-Memory Databases](lun-wen/the-adaptive-radix-tree-artful-indexing-for-main-memory-databases.md)
