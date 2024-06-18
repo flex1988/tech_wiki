@@ -167,7 +167,7 @@ struct virtio_blk_outhdr
 
 为了聚焦于这些机制，让我们过一下virtio block驱动做一个单个block读的概念路径，用virtio\_ring作为传输例子。开始时，guest有一个空的buffer，数据可以被读进去。我们分配了一个struct virtio\_blk\_outhdr和请求metadata，和一个单独的字节去接受状态（成功或失败）像表2那样。
 
-![](<../.gitbook/assets/image (3).png>)
+![](<../.gitbook/assets/image (3) (2).png>)
 
 我们把请求的这三个部分放置到描述符表三个空闲的entry里，然后把他们链接起来。在这个例子里，我们读的buffer是物理连续的：如果不是，我们要用到多个描述符表的entry。header是只读的，空的buffer和状态字节是只写的，像表3这样。
 

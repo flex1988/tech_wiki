@@ -41,6 +41,7 @@
   * [如何理解NVMe SSD](ying-jian/ru-he-li-jie-nvme-ssd.md)
   * [SSD盘符漂移怎么办](ying-jian/ssd-pan-fu-piao-yi-zen-mo-ban.md)
 * [C++](c++/README.md)
+  * [X86-64架构编程](c++/x8664-jia-gou-bian-cheng.md)
   * [C++11 新特性alignof alignas std::aligned\_storage std::align](c++/c++11-xin-te-xing-alignof-alignas-stdalignedstorage-stdalign.md)
   * [C++匿名命名空间](c++/c++-ni-ming-ming-ming-kong-jian.md)
   * [C++11 新特性 constexpr](c++/c++11-xin-te-xing-constexpr.md)
