@@ -49,6 +49,7 @@
   * [C++11 禁止copy和assign](c++/c++11-jin-zhi-copy-he-assign.md)
   * [C++11 新特性 noexcept](c++/c++11-xin-te-xing-noexcept.md)
 * [NVMe specification和用户态驱动](nvme-specification-he-yong-hu-tai-qu-dong/README.md)
+  * [SPDK的编译和环境准备](nvme-specification-he-yong-hu-tai-qu-dong/spdk-de-bian-yi-he-huan-jing-zhun-bei.md)
   * [PCIe Configuration Space](nvme-specification-he-yong-hu-tai-qu-dong/pcie-configuration-space.md)
   * [SPDK 的写 buffer 为什么必须是来自于大页内存](nvme-specification-he-yong-hu-tai-qu-dong/spdk-de-xie-buffer-wei-shi-mo-bi-xu-shi-lai-zi-yu-da-ye-nei-cun.md)
   * [1 NVMe – Controller Registers](nvme-specification-he-yong-hu-tai-qu-dong/1-nvme-controller-registers.md)
