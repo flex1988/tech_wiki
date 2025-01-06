@@ -7,7 +7,9 @@ NVMe SSD是一种使用NVMe协议的高速固态盘，通过PCIe插槽与服务�
 为了理解SSD故障的根因，我们最好先了解SSD的内部构造和原理，然后通过原理去分析SSD的故障产生，以及如何去更好的使用SSD以及诊断故障。
 
 SSD的组成如左图所示，由控制器和一组NAND芯片组成。右图可以看到控制器更详细的组成，一个控制器内部由接口（PCIe，SATA，SAS），DRAM，FTL，Channel等组成，Channel连接了控制器和NAND芯片。\
-![](../.gitbook/assets/image.png)
+
+
+<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
 
 ## Cell <a href="#cell" id="cell"></a>
 
@@ -87,6 +89,8 @@ Plane内部Block按照次序有顺序编号的ID，多个Chip上的Plane同一ID
 2\. 闪存单元的写入擦除次数是有限的，要尽量保证所有的闪存单元的PE次数是均衡的
 
 3\. 闪存产生坏块需要做坏块管理
+
+ds]asdasdasdasdkjk
 
 FTL是SSD内部的关键组件，它负责L2P的映射，以及垃圾回收（GC），磨损平衡（Wear Leveling），坏块管理，读干扰处理等功能。
 
