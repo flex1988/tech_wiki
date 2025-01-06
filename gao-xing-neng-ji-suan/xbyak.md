@@ -2,9 +2,9 @@
 
 仓库地址 git@github.com:herumi/xbyak.git
 
-_X_byak是一个x86(IA-32),x64(x86\_64,AMD64)下的C++ JIT _assembler。_
+_&#x58;_&#x62;yak是一个x86(IA-32),x64(x86\_64,AMD64)下的C++ JIT _assembler。_
 
-_X_byak is a C++ header library that enables dynamically to assemble x86(IA32), x64(AMD64, x86-64) mnemonic.
+_&#x58;_&#x62;yak is a C++ header library that enables dynamically to assemble x86(IA32), x64(AMD64, x86-64) mnemonic.
 
 ```cpp
 #include "xbyak/xbyak.h"
