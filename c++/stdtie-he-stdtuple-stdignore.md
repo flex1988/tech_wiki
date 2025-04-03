@@ -72,3 +72,25 @@ int main() {
 std::tie(std::ignore, b, c) = doSomeThing();
 ```
 
+std::tie还可以用于结构体运算符的重载，简化写法。
+
+```
+#include <iostream>
+#include <tuple>
+
+struct A {
+    int a;
+    char b;
+    double c;
+    bool operator < (const A& x) {
+        return std::tie(a, b, c) < std::tie(x.a, x.b, x.c);
+    }
+};
+
+int main() {
+    A a1 = {3, 'C', 0.3};
+    A a2 = {2, 'B', 0.2};
+    std::cout << (a1 < a2) << std::endl;
+    return 0;
+}
+```
