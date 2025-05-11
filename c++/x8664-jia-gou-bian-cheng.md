@@ -6,7 +6,7 @@
 
 在汇编语法里，寄存器的名字开头前缀是%，所有的寄存器都是64位宽度的。
 
-<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### 2 指令集
 
@@ -18,13 +18,13 @@ movq $3, %rax
 
 立即数的前缀一般都是$，没有前缀的操作数会被当成内存地址。
 
-<figure><img src="../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### 3 Stack Organization
 
 全局和本地的变量存到栈上，栈是由 寄存器%rbp 和%rsp 指定的一个内存区域。每个过程调用都会产生一个 stack frame，栈的本地变量和产生的临时数值就放在 stack frame 里。
 
-<figure><img src="../.gitbook/assets/image (3).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (3) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### 4 Calling Convention
 
