@@ -32,6 +32,7 @@
   * [The Adaptive Radix Tree: ARTful Indexing for Main-Memory Databases](lun-wen/the-adaptive-radix-tree-artful-indexing-for-main-memory-databases.md)
   * [virtio: Towards a De-Facto Standard For Virtual I/O Devices](lun-wen/virtio-towards-a-de-facto-standard-for-virtual-i-o-devices.md)
   * [Bitcask: A Log-Structured Hash Table for Fast Key/Value Data](lun-wen/bitcask-a-log-structured-hash-table-for-fast-key-value-data.md)
+  * [perseus: a fail-slow detection framework for cloud storage systems](lun-wen/perseus-a-fail-slow-detection-framework-for-cloud-storage-systems.md)
 * [形式化验证](xing-shi-hua-yan-zheng/README.md)
   * [P 语言](xing-shi-hua-yan-zheng/p-yu-yan/README.md)
     * [P 语言例子分析 1\_ClientServer](xing-shi-hua-yan-zheng/p-yu-yan/p-yu-yan-li-zi-fen-xi-1clientserver.md)
