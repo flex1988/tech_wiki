@@ -27,17 +27,17 @@ active file只支持追加的写入，这也意味着顺序写不需要磁盘寻
 
 每次写入，一个新的entry就会被追加到 active file中。可以注意到，删除也是一个特殊的标记写入，下次的 merge就可以把数据删除。所以，一个 bitcask数据文件就是一个序列的的这种 entry：
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption><p>active file 格式</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption><p>active file 格式</p></figcaption></figure>
 
 append完成后就会更新内存的结构 keydir。keydir就是一个哈希表，映射了key到一个定长的数据结构「文件，offset，value\_size」。
 
-<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption><p>keydir</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>keydir</p></figcaption></figure>
 
 当发生写的时候，keydir就会自动更新数据的最新位置。老的数据仍然存在盘上，但新的读会读到keydir的最新版本。接下来可以看到，merge流程最终会删掉旧的数据。
 
 读一个值是很简单的，最多只是一个 disk seek。我们在我们的keydir中查找key，然后用 keydir中的位置信息去读 key的值。在很多场景下，文件系统的 read-ahead cache会让这个操作更快。
 
-<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption><p>读流程</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2) (1).png" alt=""><figcaption><p>读流程</p></figcaption></figure>
 
 这个简单的模型随着时间的推移会占用大量空间，因为我们只写新值不处理旧值。我们通过一个称为merging的压缩流程来解决这个问题。merging流程遍历所有的 non-active文件，输出一组只有有效 kv 的数据文件。
 
