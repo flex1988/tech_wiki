@@ -31,7 +31,7 @@ active file只支持追加的写入，这也意味着顺序写不需要磁盘寻
 
 append完成后就会更新内存的结构 keydir。keydir就是一个哈希表，映射了key到一个定长的数据结构「文件，offset，value\_size」。
 
-<figure><img src="../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>keydir</p></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption><p>keydir</p></figcaption></figure>
 
 当发生写的时候，keydir就会自动更新数据的最新位置。老的数据仍然存在盘上，但新的读会读到keydir的最新版本。接下来可以看到，merge流程最终会删掉旧的数据。
 

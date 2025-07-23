@@ -31,7 +31,7 @@ int main()
  LD_PRELOAD=/usr/lib64/libtcmalloc.so HEAPPROFILE=/data/ ./a.out
 ```
 
-![](<../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1).png>)
+![](<../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1).png>)
 
 很快就dump出来很多heap文件，可以直接分析某个文件的内存分配\
 ![](<../.gitbook/assets/image (2) (1) (1) (1) (1) (1).png>)
