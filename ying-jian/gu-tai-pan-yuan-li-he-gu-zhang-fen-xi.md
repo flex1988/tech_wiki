@@ -9,7 +9,7 @@ NVMe SSD是一种使用NVMe协议的高速固态盘，通过PCIe插槽与服务�
 SSD的组成如左图所示，由控制器和一组NAND芯片组成。右图可以看到控制器更详细的组成，一个控制器内部由接口（PCIe，SATA，SAS），DRAM，FTL，Channel等组成，Channel连接了控制器和NAND芯片。\
 
 
-<figure><img src="../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ## Cell <a href="#cell" id="cell"></a>
 
@@ -41,7 +41,7 @@ SSD的组成如左图所示，由控制器和一组NAND芯片组成。右图可�
 
 ### NAND Flash Layout <a href="#nand-flash-layout" id="nand-flash-layout"></a>
 
-<figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 当前的主流SSD内部架构如图所示，层次是Chip->Die->Plane->Block->Page
 
