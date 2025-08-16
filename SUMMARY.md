@@ -1,6 +1,7 @@
 # Table of contents
 
 * [C++](README.md)
+  * [c++ 多态和虚函数表](c++/c++-duo-tai-he-xu-han-shu-biao.md)
   * [std::tie 和 std::tuple std::ignore](c++/stdtie-he-stdtuple-stdignore.md)
   * [C++11 std::move](c++/c++11-std-move.md)
   * [X86-64架构编程](c++/x8664-jia-gou-bian-cheng.md)
