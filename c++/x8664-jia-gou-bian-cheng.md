@@ -6,7 +6,7 @@
 
 在汇编语法里，寄存器的名字开头前缀是%，所有的寄存器都是64位宽度的。
 
-<figure><img src="../.gitbook/assets/image (2) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### 2 指令集
 
@@ -18,7 +18,7 @@ movq $3, %rax
 
 立即数的前缀一般都是$，没有前缀的操作数会被当成内存地址。
 
-<figure><img src="../.gitbook/assets/image (2) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 ### 3 Stack Organization
 

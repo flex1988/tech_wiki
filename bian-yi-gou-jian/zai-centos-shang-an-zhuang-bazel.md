@@ -15,7 +15,7 @@
    yum install java\
    yum install java-devel
 7. 查找jdk路径\
-   ![](<../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1).png>)
+   ![](<../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1) (1).png>)
 8. 设置JAVA\_HOME\
    export JAVA\_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.392.b08-2.tl2.x86\_64/
 

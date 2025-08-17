@@ -12,7 +12,7 @@ Controller registers位于 PCIe Conf space 里的 MLBAR/MUBAR register(BAR0/BAR1
 
 根据 NVMe 协议，第一个64bits寄存器是CAP 寄存器，记录了 SSD 控制器一些基本的信息。
 
-<figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1) (1) (1) (1) (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 通过nvme show-regs -H /dev/nvme0 也可以得到这些信息
 

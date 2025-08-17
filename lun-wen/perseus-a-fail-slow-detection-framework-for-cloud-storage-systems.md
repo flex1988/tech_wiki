@@ -170,7 +170,7 @@ RQ4：怎么在没有标准的情况下定义 fail-slow
 
 简而言之，DBSCAN算法通过空间密度聚类将数据点分组，其核心逻辑是：当数据点之间的空间距离小于设定阈值（ε）时，这些点将被归为同一簇群。需要特别注意的是，来自长期或永久性故障慢速驱动器（fail-slow drives）的<延迟，吞吐量>数据对可能会形成独立于主集群的孤立簇群。因此，在后续建模过程中，我们仅保留数据点数量最多的主簇群。
 
-<figure><img src="../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 加入 PCA。遗憾的是，直接对原始数据集应用DBSCAN算法进行筛选的效果有限。我们选择一个已确认存在故障慢速驱动器（fail-slow drive）的样本节点来说明该局限性。如图8a所示，在对该节点每日原始数据集应用调优后的DBSCAN算法（红色散点为识别出的异常值）后，将剩余数据（灰色散点）拟合为多项式回归模型（蓝色曲线为拟合结果，绿色虚线表示99.9%预测上限）。本案例中，DBSCAN算法仅识别出63.83%的慢速操作记录。
 
@@ -186,7 +186,7 @@ RQ4：怎么在没有标准的情况下定义 fail-slow
 
 区分慢速日志。在建立回归模型后，可通过计算预测值上限来识别慢速操作记录，并据此检测故障慢速驱动器事件。例如，99.9%的预测上限意味着99.9%的波动范围被视为正常值。实际应用中，我们采用宽松（95%）与严格（99.9%）双上限组合策略，在避免过拟合的同时最大化故障驱动器的识别率。
 
-<figure><img src="../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1) (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 创建事件。接下来，我们通过真实案例与模拟数据相结合的方式，演示如何准确定义故障慢速事件。如图 9a所示，灰色曲线表示盘的实际延时，蓝色曲线为模型拟合值，绿色曲线则是 99.9% 预测上限。通过将每个数据点的盘时延除以对应时刻的上限制，即可得到劣化比率（Slowdown ratio, SR）。例如：某盘在 1 分钟内的延时序列为15，20，25，10，5 毫秒，对应上限值为5，5，5，5，5 毫秒，则计算得到的 SR序列为 3 4 5 2 1。图 9b展示了候选盘的SR时序变化情况。
 
@@ -289,7 +289,7 @@ $$
 
 #### 5.4 评估结果
 
-<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2) (1).png" alt=""><figcaption></figcaption></figure>
 
 表 5 总结了表现结果。对于之前的一些尝试，我们选择了最佳的表现结果。对于 PERSEUS 我们使用了部署的版本。上半部分包含了全部数据集的测试结果，下半部分去掉了调度引起的故障。
 
@@ -302,9 +302,9 @@ $$
 
 现在，我们将深入分析PERSEUS系统中各项程序的有效性及参数的敏感性。表 6 中，我们列举了 PERSEUS 主要的选项或者是参数的配置区间。接下来，我们将通过启用或禁用特定功能模块来讨论PERSEUS系统的有效性，并探索不同参数组合的影响。评估结果详见表7。需注意的是，实际部署版本采用了p95与p999上限值的组合策略
 
-<figure><img src="../.gitbook/assets/image.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (2).png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src="../.gitbook/assets/image (1).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../.gitbook/assets/image (1) (1).png" alt=""><figcaption></figcaption></figure>
 
 * 异常值检测，通过关闭异常值检测，我们可以看到精度仍然保持，但是召回率暴跌到0.51。这说明，没有异常值检测，PERSEUS不能有效的分别 fail-slow 的样本，从而导致召回率偏低。
 * PCA，令人惊讶的是，如果我们启用了异常值探测但是关闭了 PCA，我们发现效果比没有异常值探测还差。这说明了 PCA的重要性。
