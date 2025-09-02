@@ -1,11 +1,12 @@
 # Table of contents
 
 * [C++](README.md)
+  * [C++ std::function](c++/c++-std-function.md)
   * [C++ 类对象的内存布局](c++/c++-lei-dui-xiang-de-nei-cun-bu-ju.md)
-  * [c++ 多态和虚函数表](c++/c++-duo-tai-he-xu-han-shu-biao.md)
+  * [C++ 多态和虚函数表](c++/c++-duo-tai-he-xu-han-shu-biao.md)
   * [std::tie 和 std::tuple std::ignore](c++/stdtie-he-stdtuple-stdignore.md)
   * [C++11 std::move](c++/c++11-std-move.md)
-  * [X86-64架构编程](c++/x8664-jia-gou-bian-cheng.md)
+  * [x86\_64架构编程](c++/x8664-jia-gou-bian-cheng.md)
   * [C++11 新特性alignof alignas std::aligned\_storage std::align](c++/c++11-xin-te-xing-alignof-alignas-stdalignedstorage-stdalign.md)
   * [C++匿名命名空间](c++/c++-ni-ming-ming-ming-kong-jian.md)
   * [C++11 新特性 constexpr](c++/c++11-xin-te-xing-constexpr.md)
