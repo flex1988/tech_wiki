@@ -1,7 +1,8 @@
 # Table of contents
 
 * [C++](README.md)
-  * [C++ std::function](c++/c++-std-function.md)
+  * [C++11 std::ref](c++/c++11-std-ref.md)
+  * [C++11 std::function](c++/c++11-std-function.md)
   * [C++ 类对象的内存布局](c++/c++-lei-dui-xiang-de-nei-cun-bu-ju.md)
   * [C++ 多态和虚函数表](c++/c++-duo-tai-he-xu-han-shu-biao.md)
   * [std::tie 和 std::tuple std::ignore](c++/stdtie-he-stdtuple-stdignore.md)
