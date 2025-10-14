@@ -66,6 +66,7 @@
   * [Linux inotify](cao-zuo-xi-tong/linux-inotify.md)
 * [机器学习](<README (2).md>)
   * [机器学习概念](ji-qi-xue-xi/ji-qi-xue-xi-gai-nian.md)
+  * [sklearn--Scikit-learn](ji-qi-xue-xi/sklearn-scikit-learn.md)
 * [高性能计算](gao-xing-neng-ji-suan/README.md)
   * [xbyak](gao-xing-neng-ji-suan/xbyak.md)
   * [SIMD](gao-xing-neng-ji-suan/simd.md)
