@@ -56,6 +56,7 @@
   * [在centos上安装bazel](bian-yi-gou-jian/zai-centos-shang-an-zhuang-bazel.md)
   * [如何让程序在运行前执行一些逻辑](bian-yi-gou-jian/ru-he-rang-cheng-xu-zai-yun-hang-qian-zhi-hang-yi-xie-luo-ji.md)
 * [linux kernel](cao-zuo-xi-tong/README.md)
+  * [linux futex 分析](cao-zuo-xi-tong/linux-futex-fen-xi.md)
   * [Linux write每次最多能写多少字节的数据](cao-zuo-xi-tong/linux-write-mei-ci-zui-duo-neng-xie-duo-shao-zi-jie-de-shu-ju.md)
   * [Linux锁的一些研究](cao-zuo-xi-tong/linux-suo-de-yi-xie-yan-jiu.md)
   * [内存分页](cao-zuo-xi-tong/nei-cun-fen-ye.md)
