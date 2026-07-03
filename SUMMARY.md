@@ -31,6 +31,7 @@
   * [NVMe PRP List](nvme-xie-yi-he-yong-hu-tai-qu-dong/nvme-prp-list.md)
   * [通过sysfs 访问 PCI 设备资源](nvme-xie-yi-he-yong-hu-tai-qu-dong/tong-guo-sysfs-fang-wen-pci-she-bei-zi-yuan.md)
 * [Paper](lun-wen/README.md)
+  * [Ceph: A Scalable, High-Performance Distributed File System](lun-wen/ceph-a-scalable-high-performance-distributed-file-system.md)
   * [perseus: a fail-slow detection framework for cloud storage systems](lun-wen/perseus-a-fail-slow-detection-framework-for-cloud-storage-systems.md)
   * [The Adaptive Radix Tree: ARTful Indexing for Main-Memory Databases](lun-wen/the-adaptive-radix-tree-artful-indexing-for-main-memory-databases.md)
   * [virtio: Towards a De-Facto Standard For Virtual I/O Devices](lun-wen/virtio-towards-a-de-facto-standard-for-virtual-i-o-devices.md)
