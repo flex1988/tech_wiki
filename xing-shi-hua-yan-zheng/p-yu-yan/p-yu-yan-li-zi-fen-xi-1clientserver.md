@@ -18,8 +18,7 @@
     └── Testscript.p
 ```
 
-1.  项目文件 ClientServer.pproj\
-
+1.  项目文件 ClientServer.pproj<br>
 
     ```
     <!-- P Project file for the Client Server example -->
@@ -39,4 +38,4 @@
 2. portfolio-config.json 配置了一些默认参数，没有也能编，影响不大
 3. PSpec目录定义了例子的两个规范
    1. **BankBalanceIsAlwaysCorrect（安全属性）保证了用户余额永远是对的**
-   2. **GuaranteedWithDrawProgress（存活属性）保证了所有的取款请求都被响应了**\
+   2. **GuaranteedWithDrawProgress（存活属性）保证了所有的取款请求都被响应了**<br>

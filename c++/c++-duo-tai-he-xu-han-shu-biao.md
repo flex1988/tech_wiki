@@ -1,4 +1,4 @@
-# c++ 多态和虚函数表
+# C++ 多态和虚函数表
 
 ## 1 多态
 
@@ -170,8 +170,7 @@ int main() {
 
 gdb可以看到 Human 虚函数表中只有重写的基类虚函数 Speak 和 Run，而函数 Speak1 由于不是虚函数所以不在虚函数表中
 
-![](<../.gitbook/assets/image (43).png>)\
-
+![](<../.gitbook/assets/image (43).png>)<br>
 
 ### 2.4 如果两个对象是同一个子类，那么虚函数表的指针相同
 
@@ -182,4 +181,4 @@ Human* h = new Human;
 Human* h2 = new Human;
 ```
 
-![](<../.gitbook/assets/image (45).png>)\
+![](<../.gitbook/assets/image (45).png>)<br>

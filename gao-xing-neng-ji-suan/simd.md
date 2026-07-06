@@ -59,8 +59,7 @@ return 0;
 2. gcc -O3 -mavx2 -S simd.cpp\
    \
    `flags : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm rep_good nopl extd_apicid eagerfpu pni pclmulqdq ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw topoext vmmcall fsgsbase bmi1 avx2 smep bmi2 rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 arat`
-3.  可以看到已经使用了avx指令\
-
+3.  可以看到已经使用了avx指令<br>
 
     ```
         vmovd   -36(%rsp), %xmm4

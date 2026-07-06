@@ -15,4 +15,4 @@
    python3 setup.py install
 5. 如果编译的版本是spdk-21.10.x，有可能出现 dpdk struct imcomplete type，需要手动切换 dpdk 的版本到前几个
 6. 编译完成后可以跑一下 spdk 的 hello world确保环境 ok\
-   ./build/examples/hello\_world\
+   ./build/examples/hello\_world<br>

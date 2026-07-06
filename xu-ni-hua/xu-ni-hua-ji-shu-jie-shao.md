@@ -1,7 +1,6 @@
 # 虚拟化技术介绍
 
-原文 [https://blog.csdn.net/qq\_44717961/article/details/105455893](https://blog.csdn.net/qq\_44717961/article/details/105455893)\
-
+原文 [https://blog.csdn.net/qq\_44717961/article/details/105455893](https://blog.csdn.net/qq_44717961/article/details/105455893)<br>
 
 #### 1. 虚拟化技术概述
 
