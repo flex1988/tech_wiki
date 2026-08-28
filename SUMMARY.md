@@ -1,6 +1,8 @@
 # Table of contents
 
-* [C++](README.md)
+* [分布式协议](README.md)
+  * [多数派 Quorum](fen-bu-shi-xie-yi/duo-shu-pai-quorum.md)
+* [C++](<README (2).md>)
   * [C++ 11 std::promise std::future](c++/c++-11-std-promise-std-future.md)
   * [条件变量（Condition Variable）的实现原理](c++/tiao-jian-bian-liang-condition-variable-de-shi-xian-yuan-li.md)
   * [C++11 std::ref](c++/c++11-std-ref.md)
@@ -68,7 +70,7 @@
   * [如何实现一个FIO插件](cao-zuo-xi-tong/ru-he-shi-xian-yi-ge-fio-cha-jian.md)
   * [如何更换linux kernel](cao-zuo-xi-tong/ru-he-geng-huan-linux-kernel.md)
   * [Linux inotify](cao-zuo-xi-tong/linux-inotify.md)
-* [机器学习](<README (2).md>)
+* [机器学习](<README (2) (1).md>)
   * [机器学习概念](ji-qi-xue-xi/ji-qi-xue-xi-gai-nian.md)
   * [sklearn--Scikit-learn](ji-qi-xue-xi/sklearn-scikit-learn.md)
 * [高性能计算](gao-xing-neng-ji-suan/README.md)
