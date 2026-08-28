@@ -34,6 +34,7 @@
   * [通过sysfs 访问 PCI 设备资源](nvme-userspace-drivers/access-pci-resources-via-sysfs.md)
 * [论文](papers/README.md)
   * [Ceph: A Scalable, High-Performance Distributed File System](papers/ceph-a-scalable-high-performance-distributed-file-system.md)
+  * [Spanner：Google 的全球分布式数据库](papers/spanner-googles-globally-distributed-database.md)
   * [perseus: a fail-slow detection framework for cloud storage systems](papers/perseus-a-fail-slow-detection-framework-for-cloud-storage-systems.md)
   * [The Adaptive Radix Tree: ARTful Indexing for Main-Memory Databases](papers/the-adaptive-radix-tree-artful-indexing-for-main-memory-databases.md)
   * [virtio: Towards a De-Facto Standard For Virtual I/O Devices](papers/virtio-towards-a-de-facto-standard-for-virtual-i-o-devices.md)
